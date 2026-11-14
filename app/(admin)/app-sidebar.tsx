@@ -18,14 +18,12 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { Wordmark } from "@/components/wordmark";
-import type { CurrentAdmin } from "@/lib/api/admin-auth";
+import { type CurrentAdmin, ROLE_LABELS } from "@/lib/api/admin-auth";
 import { fetchPendingStoresCount, pendingStoresCountQueryKey } from "@/lib/api/stores";
 import { can } from "@/lib/auth/permissions";
 import { useCurrentAdmin } from "@/lib/auth/use-current-admin";
 import { navEntryFor, visibleNav } from "@/lib/nav";
 import { SignOutButton } from "./sign-out-button";
-
-const ROLE_LABELS = { SUPER_ADMIN: "Super administrateur", ADMIN: "Administrateur" } as const;
 
 export function AppSidebar() {
   // Seeded by the layout on the server, so it is always there on first render.
@@ -49,7 +47,7 @@ export function AppSidebar() {
   return (
     <Sidebar>
       <SidebarHeader className="p-5">
-        <Link href="/" onClick={closeMobile} aria-label="Accueil Ikasso" className="w-fit">
+        <Link href="/" onClick={closeMobile} aria-label="Accueil Ikasso" className="flex min-h-11 w-fit items-center">
           <Wordmark />
         </Link>
       </SidebarHeader>

@@ -1,7 +1,6 @@
+import { ROLE_LABELS } from "@/lib/api/admin-auth";
 import { getCurrentAdmin } from "@/lib/auth/current-admin";
 import { visibleNav } from "@/lib/nav";
-
-const ROLE_LABELS = { SUPER_ADMIN: "Super administrateur", ADMIN: "Administrateur" } as const;
 
 // Home until the landing page is decided (open plan question).
 export default async function HomePage() {

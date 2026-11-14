@@ -1,10 +1,9 @@
 import type { Metadata } from "next";
+import { ROLE_LABELS } from "@/lib/api/admin-auth";
 import { getCurrentAdmin } from "@/lib/auth/current-admin";
 import { ChangePasswordForm } from "./change-password-form";
 
 export const metadata: Metadata = { title: "Mon profil · Ikasso Administration" };
-
-const ROLE_LABELS = { SUPER_ADMIN: "Super administrateur", ADMIN: "Administrateur" } as const;
 
 export default async function ProfilePage() {
   const admin = await getCurrentAdmin();

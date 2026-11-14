@@ -27,10 +27,8 @@ export const PASSWORD_RULES: readonly PasswordRule[] = [
     id: "length",
     label: "Entre 8 et 128 caractères",
     message: "Le mot de passe doit contenir entre 8 et 128 caractères",
-    test: (value) => {
-      const length = [...value].length;
-      return length >= 8 && length <= 128;
-    },
+    // Same `.` as the API (`u` flag, no `s` flag): line separators are refused.
+    test: (value) => /^.{8,128}$/u.test(value),
   },
   {
     id: "lowercase",

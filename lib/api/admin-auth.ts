@@ -15,6 +15,12 @@ export const currentAdminSchema = z.object({
 
 export type CurrentAdmin = z.infer<typeof currentAdminSchema>;
 
+/** How each role reads in the UI. */
+export const ROLE_LABELS: Record<CurrentAdmin["role"], string> = {
+  SUPER_ADMIN: "Super administrateur",
+  ADMIN: "Administrateur",
+};
+
 export const currentAdminQueryKey = ["admin", "me"] as const;
 
 export const ME_PATH = "/admin/auth/me";

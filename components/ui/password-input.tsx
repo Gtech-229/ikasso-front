@@ -27,7 +27,8 @@ function PasswordInput({
       <button
         type="button"
         onClick={() => setVisible((shown) => !shown)}
-        aria-label={visible ? "Masquer le mot de passe" : "Afficher le mot de passe"}
+        // Fixed label with aria-pressed (toggle button): "pressed" means shown.
+        aria-label="Afficher le mot de passe"
         aria-pressed={visible}
         aria-controls={props.id}
         disabled={props.disabled}
