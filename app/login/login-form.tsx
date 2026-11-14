@@ -2,12 +2,14 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
+import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { login, loginInputSchema, type LoginInput } from "@/lib/api/admin-auth";
 import { refreshSession } from "@/lib/api/client";
 import { isApiError, UNEXPECTED_ERROR_MESSAGE } from "@/lib/api/errors";
@@ -94,9 +96,8 @@ export function LoginForm() {
 
         <Field data-invalid={errors.password ? true : undefined}>
           <FieldLabel htmlFor="password">Mot de passe</FieldLabel>
-          <Input
+          <PasswordInput
             id="password"
-            type="password"
             autoComplete="current-password"
             aria-invalid={errors.password ? true : undefined}
             aria-describedby={errors.password ? "password-error" : undefined}
@@ -117,6 +118,21 @@ export function LoginForm() {
         <Button type="submit" className="w-full" disabled={busy}>
           {busy ? "Connexion…" : "Se connecter"}
         </Button>
+
+        <nav aria-label="Mot de passe" className="flex flex-col items-center">
+          <Link
+            href="/password?mode=reset"
+            className="flex min-h-11 items-center text-[15px] font-semibold underline-offset-4 hover:underline"
+          >
+            Mot de passe oublié ?
+          </Link>
+          <Link
+            href="/password?mode=set"
+            className="flex min-h-11 items-center text-[15px] text-muted-ink underline-offset-4 hover:underline"
+          >
+            Première connexion ? Définir mon mot de passe
+          </Link>
+        </nav>
       </FieldGroup>
     </form>
   );

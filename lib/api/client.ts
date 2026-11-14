@@ -6,6 +6,7 @@ const REFRESH_PATH = "/admin/auth/refresh";
 const ME_PATH = "/admin/auth/me";
 const LOGIN_PAGE = "/login";
 const REFRESH_LOCK = "ikasso-session-refresh";
+const WRONG_PASSWORD = "INVALID_CREDENTIALS";
 
 // A 401 on these means bad credentials or an expired link, not an expired
 // access token, so they never trigger a refresh.
@@ -101,15 +102,19 @@ export async function apiFetch<T>(
   let response = await send(url, init);
 
   if (response.status === 401 && !AUTH_PATHS.has(path)) {
+    const unauthorized = await toApiError(response);
+    // A wrong password checked by the handler (change password) is an answer,
+    // not an expired token: replaying it would count twice toward the lockout.
+    if (unauthorized.error === WRONG_PASSWORD) throw unauthorized;
+
     const outcome = await refreshSession();
     if (outcome === "ended") {
-      const error = await toApiError(response);
       goToLogin();
-      throw error;
+      throw unauthorized;
     }
     if (outcome !== "refreshed") throw outcome;
-    // The API rejects a 401 request in its auth guard before any handler
-    // runs, so replaying a mutation cannot apply it twice.
+    // Only the auth guard's 401 gets here: it rejects the request before any
+    // handler runs, so replaying a mutation cannot apply it twice.
     response = await send(url, init);
   }
 

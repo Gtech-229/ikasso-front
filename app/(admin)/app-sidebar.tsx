@@ -111,14 +111,14 @@ export function AppSidebar() {
           Ikasso ne crée, ne modifie et ne supprime jamais une opération d’une
           quincaillerie.
         </p>
-        <AdminCard admin={admin} />
+        <AdminCard admin={admin} onNavigate={closeMobile} />
         <div className="stripe h-3" />
       </SidebarFooter>
     </Sidebar>
   );
 }
 
-function AdminCard({ admin }: { admin: CurrentAdmin }) {
+function AdminCard({ admin, onNavigate }: { admin: CurrentAdmin; onNavigate: () => void }) {
   const initials = `${admin.firstName.charAt(0)}${admin.lastName.charAt(0)}`.toUpperCase();
   return (
     <div className="mx-4 flex items-center gap-3">
@@ -128,12 +128,16 @@ function AdminCard({ admin }: { admin: CurrentAdmin }) {
       >
         {initials}
       </span>
-      <div className="min-w-0 flex-1">
-        <p className="truncate text-[15px] font-semibold">
+      <Link
+        href="/profile"
+        onClick={onNavigate}
+        className="flex min-h-11 min-w-0 flex-1 flex-col justify-center rounded-control underline-offset-4 hover:underline focus-visible:ring-2 focus-visible:ring-sidebar-ring focus-visible:outline-none"
+      >
+        <span className="truncate text-[15px] font-semibold">
           {admin.firstName} {admin.lastName}
-        </p>
-        <p className="truncate text-[13px] text-sidebar-foreground/60">{ROLE_LABELS[admin.role]}</p>
-      </div>
+        </span>
+        <span className="truncate text-[13px] text-sidebar-foreground/60">{ROLE_LABELS[admin.role]}</span>
+      </Link>
       <SignOutButton />
     </div>
   );
