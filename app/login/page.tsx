@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
+import { Wordmark } from "@/components/wordmark";
 import { LoginForm, LoginPending } from "./login-form";
 
 export const metadata: Metadata = {
@@ -44,13 +45,3 @@ export default function LoginPage() {
   );
 }
 
-function Wordmark({ className }: { className?: string }) {
-  return (
-    <div className={`flex items-center gap-3 ${className ?? ""}`}>
-      <span className="flex size-10 items-center justify-center rounded-control bg-brand font-display text-lg font-bold text-ink">
-        I
-      </span>
-      <span className="font-display text-xl font-bold">Ikasso</span>
-    </div>
-  );
-}

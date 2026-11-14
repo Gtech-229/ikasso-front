@@ -3,6 +3,7 @@ import { Suspense } from "react";
 import { currentAdminQueryKey } from "@/lib/api/admin-auth";
 import { getCurrentAdmin } from "@/lib/auth/current-admin";
 import { getQueryClient } from "@/lib/query/get-query-client";
+import { AdminShell } from "./admin-shell";
 
 // Every page in this group needs a signed-in admin.
 export default function AdminLayout({ children }: LayoutProps<"/">) {
@@ -17,7 +18,11 @@ async function SessionGate({ children }: { children: React.ReactNode }) {
   const admin = await getCurrentAdmin();
   const queryClient = getQueryClient();
   queryClient.setQueryData(currentAdminQueryKey, admin);
-  return <HydrationBoundary state={dehydrate(queryClient)}>{children}</HydrationBoundary>;
+  return (
+    <HydrationBoundary state={dehydrate(queryClient)}>
+      <AdminShell>{children}</AdminShell>
+    </HydrationBoundary>
+  );
 }
 
 function AdminLoading() {

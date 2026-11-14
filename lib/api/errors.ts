@@ -70,3 +70,8 @@ export function isApiError(value: unknown): value is ApiError {
 export function isClientError(value: unknown): boolean {
   return isApiError(value) && value.statusCode >= 400 && value.statusCode < 500;
 }
+
+/** The role may not do this: shown as the 403 view, not as a toast. */
+export function isForbidden(value: unknown): boolean {
+  return isApiError(value) && value.statusCode === 403;
+}

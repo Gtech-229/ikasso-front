@@ -6,15 +6,21 @@ import {
 } from "@tanstack/react-query";
 import { cache } from "react";
 import { toast } from "sonner";
-import { isApiError, isClientError } from "@/lib/api/errors";
-
+import { isApiError, isClientError, isForbidden } from "@/lib/api/errors";
 
 function makeQueryClient(): QueryClient {
   return new QueryClient({
     queryCache: new QueryCache({
       onError: (error) => {
-        // A 401 is handled by the refresh queue (replay or redirect to login).
-        if (environmentManager.isServer() || (isApiError(error) && error.statusCode === 401)) return;
+        // A 401 is handled by the refresh queue (replay or redirect to login); a
+        // 403 is shown by the page as the Forbidden view.
+        if (
+          environmentManager.isServer() ||
+          (isApiError(error) && error.statusCode === 401) ||
+          isForbidden(error)
+        ) {
+          return;
+        }
         toast.error(error.message);
       },
     }),

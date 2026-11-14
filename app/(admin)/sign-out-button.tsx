@@ -1,10 +1,12 @@
 "use client";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { LogOut } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { logout } from "@/lib/api/admin-auth";
 
+/** Icon button for the sidebar admin card. */
 export function SignOutButton() {
   const queryClient = useQueryClient();
   const mutation = useMutation({
@@ -20,8 +22,16 @@ export function SignOutButton() {
   const busy = mutation.isPending || mutation.isSuccess;
 
   return (
-    <Button variant="action" disabled={busy} onClick={() => mutation.mutate()}>
-      {busy ? "Déconnexion…" : "Se déconnecter"}
+    <Button
+      variant="ghost"
+      size="icon"
+      className="size-11 shrink-0 text-sidebar-foreground hover:bg-sidebar-foreground/10 hover:text-sidebar-foreground"
+      aria-label={busy ? "Déconnexion…" : "Se déconnecter"}
+      title="Se déconnecter"
+      disabled={busy}
+      onClick={() => mutation.mutate()}
+    >
+      <LogOut />
     </Button>
   );
 }
