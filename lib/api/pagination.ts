@@ -9,10 +9,3 @@ export function paginatedSchema<T extends z.ZodType>(item: T) {
     pageSize: z.number().int().positive(),
   });
 }
-
-export type Paginated<T> = {
-  items: T[];
-  total: number;
-  page: number;
-  pageSize: number;
-};

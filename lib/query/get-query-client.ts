@@ -23,8 +23,10 @@ function makeQueryClient(): QueryClient {
         // Hydrated server data stays fresh, so the browser does not refetch it at once.
         staleTime: 60 * 1000,
         refetchOnWindowFocus: false,
-        // A 4xx will not change on retry; other failures get one more try.
-        retry: (failureCount, error) => !isClientError(error) && failureCount < 1,
+        // A 4xx will not change on retry; other failures get one more try in the
+        // browser. Never on the server: a failed prefetch must not hold the page.
+        retry: (failureCount, error) =>
+          !environmentManager.isServer() && !isClientError(error) && failureCount < 1,
       },
       dehydrate: {
         // Also send pending queries so streamed server prefetches reach the client.

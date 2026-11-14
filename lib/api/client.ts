@@ -3,7 +3,9 @@ import { buildInit, parseResponse, send, toApiError, type RequestOptions } from 
 
 const API_BASE = "/api/v1";
 const REFRESH_PATH = "/admin/auth/refresh";
+const ME_PATH = "/admin/auth/me";
 const LOGIN_PAGE = "/login";
+const REFRESH_LOCK = "ikasso-session-refresh";
 
 // A 401 on these means bad credentials or an expired link, not an expired
 // access token, so they never trigger a refresh.
@@ -20,7 +22,7 @@ const AUTH_PATHS = new Set([
  * so the session is over. An ApiError: network or 5xx failure, the session may
  * still be valid, so the admin must not be sent to login.
  */
-type RefreshOutcome = "refreshed" | "ended" | ApiError;
+export type RefreshOutcome = "refreshed" | "ended" | ApiError;
 
 // The one refresh in flight; every request that meets a 401 meanwhile waits on it.
 let refreshInFlight: Promise<RefreshOutcome> | null = null;
@@ -31,17 +33,43 @@ async function classifyRefresh(response: Response): Promise<RefreshOutcome> {
   return toApiError(response);
 }
 
-function refreshSession(): Promise<RefreshOutcome> {
-  refreshInFlight ??= send(`${API_BASE}${REFRESH_PATH}`, {
+/**
+ * Probe first: another tab may already have rotated the shared cookies while
+ * this one waited for the lock. Refreshing again with the old refresh token
+ * would be refused, and that refusal clears every tab's cookies.
+ */
+async function probeThenRefresh(): Promise<RefreshOutcome> {
+  const probe = await send(`${API_BASE}${ME_PATH}`, {
+    headers: { Accept: "application/json" },
+    credentials: "same-origin",
+  });
+  if (probe.ok) return "refreshed";
+  if (probe.status !== 401) return toApiError(probe);
+
+  const response = await send(`${API_BASE}${REFRESH_PATH}`, {
     method: "POST",
     credentials: "same-origin",
-  })
-    .then(classifyRefresh)
+  });
+  return classifyRefresh(response);
+}
+
+/** One refresh across all tabs (Web Locks), and one per tab at a time. */
+export function refreshSession(): Promise<RefreshOutcome> {
+  if (refreshInFlight) return refreshInFlight;
+  // Web Locks needs a secure context (https or localhost); without it, refresh
+  // per tab as before.
+  const locked: Promise<RefreshOutcome> =
+    typeof navigator !== "undefined" && navigator.locks
+      ? // `then` flattens the callback's promise that the DOM typing nests.
+        navigator.locks.request(REFRESH_LOCK, probeThenRefresh).then((outcome) => outcome)
+      : probeThenRefresh();
+  const flight = locked
     .catch((error: unknown) => (isApiError(error) ? error : ApiError.network()))
     .finally(() => {
       refreshInFlight = null;
     });
-  return refreshInFlight;
+  refreshInFlight = flight;
+  return flight;
 }
 
 // Every request queued behind a failed refresh lands here; navigate only once.
