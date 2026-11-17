@@ -9,6 +9,8 @@ export interface RequestOptions<T> {
   /** Parses the success body. Omit only for routes that answer 204. */
   schema?: z.ZodType<T>;
   signal?: AbortSignal;
+  /** `"blob"` for binary answers (document photos); errors are still the JSON shape. */
+  as?: "json" | "blob";
 }
 
 export function buildInit(
@@ -16,7 +18,7 @@ export function buildInit(
   extraHeaders: Record<string, string> = {},
 ): RequestInit {
   const headers: Record<string, string> = {
-    Accept: "application/json",
+    Accept: options.as === "blob" ? "*/*" : "application/json",
     ...extraHeaders,
   };
   let body: string | undefined;
@@ -58,6 +60,12 @@ export async function toApiError(response: Response): Promise<ApiError> {
 }
 
 /** Turns a response into parsed data, or throws an ApiError. */
+/** A binary success body, or the API error parsed as usual. */
+export async function parseBlob(response: Response): Promise<Blob> {
+  if (!response.ok) throw await toApiError(response);
+  return response.blob();
+}
+
 export async function parseResponse<T>(
   response: Response,
   schema: z.ZodType<T> | undefined,

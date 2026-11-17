@@ -3,7 +3,7 @@
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { Forbidden } from "@/components/forbidden";
-import { StatusPill, type PillTone } from "@/components/status-pill";
+import { StatusPill, STORE_STATUS_TONES, SUBSCRIPTION_STATE_TONES } from "@/components/status-pill";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -21,28 +21,12 @@ import {
   STORES_PAGE_SIZE,
   storesQueryKey,
   SUBSCRIPTION_STATE_LABELS,
-  type StoreStatus,
   type StoreSummary,
   type StoresListParams,
-  type SubscriptionState,
 } from "@/lib/api/stores";
 import { formatDate } from "@/lib/format";
 import { storesListHref } from "@/lib/stores-list-params";
 import { ShallowLink } from "./shallow-link";
-
-const STATUS_TONES: Record<StoreStatus, PillTone> = {
-  PENDING: "pending",
-  VERIFIED: "success",
-  SUSPENDED: "danger",
-  CLOSED: "muted",
-};
-
-const SUBSCRIPTION_TONES: Record<SubscriptionState, PillTone> = {
-  ACTIVE: "success",
-  UPCOMING: "pending",
-  EXPIRED: "dark",
-  NONE: "muted",
-};
 
 const COLUMNS = ["Quincaillerie", "Ville", "Pays", "Statut", "Abonnement", "Inscrite le", "Action"];
 
@@ -119,11 +103,11 @@ function StoreRow({ store }: { store: StoreSummary }) {
       <TableCell>{store.city}</TableCell>
       <TableCell>{store.countryCode}</TableCell>
       <TableCell>
-        <StatusPill tone={STATUS_TONES[store.status]}>{STORE_STATUS_LABELS[store.status]}</StatusPill>
+        <StatusPill tone={STORE_STATUS_TONES[store.status]}>{STORE_STATUS_LABELS[store.status]}</StatusPill>
       </TableCell>
       <TableCell>
         <div className="flex flex-col items-start gap-1">
-          <StatusPill tone={SUBSCRIPTION_TONES[store.subscriptionState]}>
+          <StatusPill tone={SUBSCRIPTION_STATE_TONES[store.subscriptionState]}>
             {SUBSCRIPTION_STATE_LABELS[store.subscriptionState]}
           </StatusPill>
           {store.currentSubscription && (

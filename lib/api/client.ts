@@ -1,5 +1,5 @@
 import { ApiError, isApiError } from "./errors";
-import { buildInit, parseResponse, send, toApiError, type RequestOptions } from "./core";
+import { buildInit, parseBlob, parseResponse, send, toApiError, type RequestOptions } from "./core";
 
 const API_BASE = "/api/v1";
 const REFRESH_PATH = "/admin/auth/refresh";
@@ -118,5 +118,7 @@ export async function apiFetch<T>(
     response = await send(url, init);
   }
 
+  // T is Blob for `as: "blob"` callers (see fetchStoreDocument).
+  if (options.as === "blob") return (await parseBlob(response)) as T;
   return parseResponse(response, options.schema);
 }

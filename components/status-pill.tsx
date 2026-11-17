@@ -1,4 +1,5 @@
 import { Badge } from "@/components/ui/badge";
+import type { StoreStatus, SubscriptionState } from "@/lib/api/stores";
 import { cn } from "@/lib/utils";
 
 export type PillTone = "pending" | "success" | "danger" | "dark" | "muted";
@@ -19,3 +20,17 @@ export function StatusPill({ tone, children }: { tone: PillTone; children: React
     </Badge>
   );
 }
+
+export const STORE_STATUS_TONES: Record<StoreStatus, PillTone> = {
+  PENDING: "pending",
+  VERIFIED: "success",
+  SUSPENDED: "danger",
+  CLOSED: "muted",
+};
+
+export const SUBSCRIPTION_STATE_TONES: Record<SubscriptionState, PillTone> = {
+  ACTIVE: "success",
+  UPCOMING: "pending",
+  EXPIRED: "dark",
+  NONE: "muted",
+};

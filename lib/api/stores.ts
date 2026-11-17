@@ -95,3 +95,70 @@ export const SUBSCRIPTION_STATE_LABELS: Record<SubscriptionState, string> = {
   EXPIRED: "Expiré",
   NONE: "Aucun",
 };
+
+export const PLAN_LABELS: Record<z.infer<typeof subscriptionSchema>["plan"], string> = {
+  TRIAL: "Essai",
+  STANDARD: "Standard",
+  PRO: "Pro",
+};
+
+/** `GET /admin/stores/:id`. Settings stay loose here; the detail page (feature 7) reads them. */
+export const storeDetailSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  address: z.string(),
+  city: z.string(),
+  phone: z.string(),
+  tradeRegister: z.string(),
+  status: storeStatusSchema,
+  verifiedAt: z.string().nullable(),
+  statusReason: z.string().nullable(),
+  country: z.object({
+    code: z.string(),
+    name: z.string(),
+    currencyCode: z.string(),
+    currencySymbol: z.string(),
+    decimals: z.number().int(),
+  }),
+  settings: z.record(z.string(), z.unknown()),
+  managers: z.array(
+    z.object({ userId: z.string(), firstName: z.string(), lastName: z.string(), phone: z.string() }),
+  ),
+  subscriptionState: subscriptionStateSchema,
+  currentSubscription: subscriptionSchema.nullable(),
+  requestedPlan: z.enum(["TRIAL", "STANDARD", "PRO"]).nullable(),
+  selfRegistered: z.boolean(),
+  documents: z.object({ identity: z.boolean(), tradeRegister: z.boolean() }),
+  createdAt: z.string(),
+});
+export type StoreDetail = z.infer<typeof storeDetailSchema>;
+
+export const storeDetailQueryKey = (id: string) => ["stores", "detail", id] as const;
+
+export function storeDetailPath(id: string): string {
+  return `/admin/stores/${encodeURIComponent(id)}`;
+}
+
+export function fetchStoreDetail(id: string): Promise<StoreDetail> {
+  return apiFetch(storeDetailPath(id), { schema: storeDetailSchema });
+}
+
+/** The two registration photos; `field` is the presence flag in `documents`. */
+export const STORE_DOCUMENT_KINDS = [
+  { kind: "identity", field: "identity", label: "Pièce d’identité du gérant" },
+  { kind: "trade-register", field: "tradeRegister", label: "Registre du commerce" },
+] as const;
+export type StoreDocumentKind = (typeof STORE_DOCUMENT_KINDS)[number]["kind"];
+
+export const storeDocumentQueryKey = (id: string, kind: StoreDocumentKind) =>
+  ["stores", id, "document", kind] as const;
+
+/** Image bytes through the session (refresh queue applies); kept in memory only. */
+export function fetchStoreDocument(id: string, kind: StoreDocumentKind): Promise<Blob> {
+  return apiFetch<Blob>(`${storeDetailPath(id)}/documents/${kind}`, { as: "blob" });
+}
+
+/** PENDING -> VERIFIED (guard `stores.manage`). */
+export function verifyStore(id: string): Promise<StoreDetail> {
+  return apiFetch(`${storeDetailPath(id)}/verify`, { method: "PATCH", schema: storeDetailSchema });
+}

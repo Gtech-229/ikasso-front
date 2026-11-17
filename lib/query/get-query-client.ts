@@ -11,13 +11,15 @@ import { isApiError, isClientError, isForbidden } from "@/lib/api/errors";
 function makeQueryClient(): QueryClient {
   return new QueryClient({
     queryCache: new QueryCache({
-      onError: (error) => {
+      onError: (error, query) => {
         // A 401 is handled by the refresh queue (replay or redirect to login); a
-        // 403 is shown by the page as the Forbidden view.
+        // 403 is shown by the page as the Forbidden view; a query with
+        // `meta.inlineError` shows its own error state in the page.
         if (
           environmentManager.isServer() ||
           (isApiError(error) && error.statusCode === 401) ||
-          isForbidden(error)
+          isForbidden(error) ||
+          query.meta?.inlineError === true
         ) {
           return;
         }
