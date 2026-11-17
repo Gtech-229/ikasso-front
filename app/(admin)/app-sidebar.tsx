@@ -88,7 +88,8 @@ export function AppSidebar() {
                           aria-hidden="true"
                           className={
                             active
-                              ? "top-3 right-3 rounded-full bg-ink px-2 text-surface"
+                              ? // Beats the generated active-item text colour (ink).
+                                "top-3 right-3 rounded-full bg-ink px-2 text-surface peer-data-active/menu-button:text-surface"
                               : "top-3 right-3 rounded-full bg-brand px-2 text-ink"
                           }
                         >

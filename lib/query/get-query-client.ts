@@ -21,7 +21,9 @@ function makeQueryClient(): QueryClient {
         ) {
           return;
         }
-        toast.error(error.message);
+        // Same id for the same message: several queries failing together (API
+        // down) show one toast, not one each.
+        toast.error(error.message, { id: error.message });
       },
     }),
     defaultOptions: {
