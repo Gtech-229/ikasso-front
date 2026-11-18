@@ -1,0 +1,103 @@
+import { z } from "zod";
+import type { StoreSettingsChanges } from "@/lib/api/stores";
+import { compareAmounts, toMinorUnits } from "@/lib/money-input";
+
+// Rules and messages mirror the API (backend src/stores/dto/register-store.dto.ts
+// and src/common/money.ts); the API still validates every request.
+
+const text = (min: number, max: number, message: string) =>
+  z.string().trim().min(min, { error: message }).max(max, { error: message });
+
+export const storeInfoSchema = z.object({
+  name: text(1, 150, "Le nom doit contenir 1 à 150 caractères"),
+  address: text(1, 300, "L’adresse doit contenir 1 à 300 caractères"),
+  city: text(1, 100, "La ville doit contenir 1 à 100 caractères"),
+  phone: text(2, 30, "Le numéro de téléphone est invalide"),
+  tradeRegister: text(1, 100, "Le registre du commerce doit contenir 1 à 100 caractères"),
+});
+export type StoreInfoValues = z.infer<typeof storeInfoSchema>;
+
+export const AMOUNT_RULE_MESSAGE =
+  "Le montant doit être un entier positif écrit en chiffres, sans décimales (ex. \"200000\")";
+export const MIN_DEPOSIT_ABOVE_MAX_BALANCE = "Le dépôt minimum ne peut pas dépasser le solde maximal";
+const DELIVERY_DELAY_MESSAGE = "Le délai de livraison doit être un nombre entier de jours, de 1 à 365";
+export const TERMS_MAX = 10_000;
+
+/** Form values are the typed text; `decimals` is the store currency's. */
+export function storeSettingsFormSchema(decimals: number) {
+  const amount = z
+    .string()
+    .refine((value) => toMinorUnits(value, decimals) !== null, { error: AMOUNT_RULE_MESSAGE });
+  return z
+    .object({
+      maxBalance: amount,
+      validationThreshold: amount,
+      minDeposit: amount,
+      deliveryDelayDays: z
+        .string()
+        .trim()
+        .regex(/^\d{1,3}$/, { error: DELIVERY_DELAY_MESSAGE })
+        .refine((value) => Number(value) >= 1 && Number(value) <= 365, { error: DELIVERY_DELAY_MESSAGE }),
+      terms: z
+        .string()
+        .refine((value) => value.trim().length <= TERMS_MAX, {
+          error: "Les conditions générales dépassent 10 000 caractères",
+        }),
+    })
+    .superRefine((values, ctx) => {
+      const min = toMinorUnits(values.minDeposit, decimals);
+      const max = toMinorUnits(values.maxBalance, decimals);
+      if (min && max && compareAmounts(min, max) > 0) {
+        ctx.addIssue({ code: "custom", path: ["minDeposit"], message: MIN_DEPOSIT_ABOVE_MAX_BALANCE });
+      }
+    });
+}
+export type StoreSettingsFormValues = z.infer<ReturnType<typeof storeSettingsFormSchema>>;
+
+/** Keys whose value changed; strings compared trimmed. */
+export function changedFields<T extends Record<string, unknown>>(initial: T, values: T): Partial<T> {
+  const changes: Partial<T> = {};
+  for (const key of Object.keys(values) as (keyof T)[]) {
+    const before = initial[key];
+    const after = values[key];
+    const same =
+      typeof before === "string" && typeof after === "string" ? before.trim() === after.trim() : before === after;
+    if (!same) changes[key] = after;
+  }
+  return changes;
+}
+
+/** The settings form's text values for a store's current settings. */
+export function settingsFormValues(
+  settings: { maxBalance: string; validationThreshold: string; minDeposit: string; deliveryDelayDays: number; terms: string | null },
+  decimals: number,
+  fromMinor: (amount: string, decimals: number) => string,
+): StoreSettingsFormValues {
+  return {
+    maxBalance: fromMinor(settings.maxBalance, decimals),
+    validationThreshold: fromMinor(settings.validationThreshold, decimals),
+    minDeposit: fromMinor(settings.minDeposit, decimals),
+    deliveryDelayDays: String(settings.deliveryDelayDays),
+    terms: settings.terms ?? "",
+  };
+}
+
+/**
+ * The API body for the edited settings: only changed fields, amounts in the
+ * smallest unit, the delay as a number, and cleared terms as null.
+ */
+export function settingsChanges(
+  initial: StoreSettingsFormValues,
+  values: StoreSettingsFormValues,
+  decimals: number,
+): StoreSettingsChanges {
+  const changed = changedFields(initial, values);
+  const body: StoreSettingsChanges = {};
+  for (const key of ["maxBalance", "validationThreshold", "minDeposit"] as const) {
+    const value = changed[key];
+    if (value !== undefined) body[key] = toMinorUnits(value, decimals) ?? value;
+  }
+  if (changed.deliveryDelayDays !== undefined) body.deliveryDelayDays = Number(changed.deliveryDelayDays.trim());
+  if (changed.terms !== undefined) body.terms = changed.terms.trim() || null;
+  return body;
+}

@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { buttonVariants } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
 
 /**
  * A page or data the admin's role may not open (UI rule or API 403).
@@ -18,7 +17,7 @@ export function Forbidden({ embedded = false }: { embedded?: boolean }) {
         <Heading className="font-display text-[22px] font-bold">Accès refusé</Heading>
         <p className="text-[15px] text-muted-ink">Votre rôle ne permet pas d’ouvrir cette page.</p>
         {/* A real link styled as a button: announced as a link. */}
-        <Link href="/" className={cn(buttonVariants({ variant: "secondary" }))}>
+        <Link href="/" className={buttonVariants({ variant: "secondary" })}>
           Retour à l’accueil
         </Link>
       </section>

@@ -188,3 +188,23 @@ export function reactivateStore(id: string): Promise<StoreDetail> {
 export function closeStore(id: string, reason: string): Promise<StoreDetail> {
   return apiFetch(`${storeDetailPath(id)}/close`, { method: "PATCH", body: { reason }, schema: storeDetailSchema });
 }
+
+export type StoreInfoChanges = Partial<Pick<StoreDetail, "name" | "address" | "city" | "phone" | "tradeRegister">>;
+
+/** Partial correction of the store information (guard `stores.manage`). */
+export function updateStore(id: string, changes: StoreInfoChanges): Promise<StoreDetail> {
+  return apiFetch(storeDetailPath(id), { method: "PATCH", body: changes, schema: storeDetailSchema });
+}
+
+export type StoreSettingsChanges = Partial<{
+  maxBalance: string;
+  validationThreshold: string;
+  minDeposit: string;
+  deliveryDelayDays: number;
+  terms: string | null;
+}>;
+
+/** Partial settings change (guard `store-settings.manage`); `terms: null` clears the terms. */
+export function updateStoreSettings(id: string, changes: StoreSettingsChanges): Promise<StoreDetail> {
+  return apiFetch(`${storeDetailPath(id)}/settings`, { method: "PATCH", body: changes, schema: storeDetailSchema });
+}

@@ -93,7 +93,7 @@ export function LifecycleActions({ store }: { store: StoreDetail }) {
       </h2>
       {actions.length === 0 ? (
         // The API gives no closing date, so none is shown.
-        <p className="text-[15px] text-muted-ink">Fermée définitivement : plus aucune modification possible.</p>
+        <p className="text-[15px] text-muted-ink">Fermée définitivement.</p>
       ) : (
         <div className="flex flex-col gap-2">
           {actions.map((action) => (

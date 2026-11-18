@@ -7,6 +7,7 @@ import { StatusPill, STORE_STATUS_TONES, SUBSCRIPTION_STATE_TONES } from "@/comp
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { cn } from "@/lib/utils";
 import { isApiError, isForbidden, UNEXPECTED_ERROR_MESSAGE } from "@/lib/api/errors";
 import {
   fetchStoreDetail,
@@ -16,10 +17,16 @@ import {
   SUBSCRIPTION_STATE_LABELS,
   type StoreDetail,
 } from "@/lib/api/stores";
-import { formatDate, formatMoney } from "@/lib/format";
+import { can } from "@/lib/auth/permissions";
+import { useCurrentAdmin } from "@/lib/auth/use-current-admin";
+import { formatDate } from "@/lib/format";
+import { InformationPanel } from "./information-panel";
 import { LifecycleActions } from "./lifecycle-actions";
+import { Row, Rows } from "./rows";
+import { SettingsPanel } from "./settings-panel";
 
 export function StoreView({ id }: { id: string }) {
+  const admin = useCurrentAdmin().data;
   const query = useQuery({
     queryKey: storeDetailQueryKey(id),
     queryFn: () => fetchStoreDetail(id),
@@ -52,8 +59,10 @@ export function StoreView({ id }: { id: string }) {
   }
 
   const store = query.data;
+  const canManage = !!admin && can(admin, "stores.manage");
   return (
-    <div className="grid min-w-0 gap-5 xl:grid-cols-[minmax(0,1fr)_22rem]">
+    // The Actions column only when it has content (stores.manage).
+    <div className={cn("grid min-w-0 gap-5", canManage && "xl:grid-cols-[minmax(0,1fr)_22rem]")}>
       <div className="flex min-w-0 flex-col gap-5">
         <Header store={store} />
         <StoreTabs store={store} />
@@ -115,52 +124,20 @@ function StoreTabs({ store }: { store: StoreDetail }) {
           </TabsTrigger>
         </TabsList>
       </div>
-      <TabsContent value="info" className="rounded-card bg-surface p-6">
-        <Information store={store} />
+      {/* Kept mounted: an edit in progress survives a tab switch. */}
+      <TabsContent value="info" keepMounted className="rounded-card bg-surface p-6">
+        <InformationPanel store={store} />
       </TabsContent>
       <TabsContent value="managers" className="rounded-card bg-surface p-6">
         <Managers store={store} />
       </TabsContent>
-      <TabsContent value="settings" className="rounded-card bg-surface p-6">
-        <Settings store={store} />
+      <TabsContent value="settings" keepMounted className="rounded-card bg-surface p-6">
+        <SettingsPanel store={store} />
       </TabsContent>
       <TabsContent value="subscription" className="rounded-card bg-surface p-6">
         <Subscription store={store} />
       </TabsContent>
     </Tabs>
-  );
-}
-
-function Rows({ children }: { children: React.ReactNode }) {
-  return <dl className="grid gap-x-6 gap-y-3 text-[15px] sm:grid-cols-[12rem_1fr]">{children}</dl>;
-}
-
-function Row({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <>
-      <dt className="text-muted-ink">{label}</dt>
-      <dd className="min-w-0 break-words">{children}</dd>
-    </>
-  );
-}
-
-function Information({ store }: { store: StoreDetail }) {
-  return (
-    <>
-      <Rows>
-        <Row label="Adresse">{store.address}</Row>
-        <Row label="Ville">
-          {store.city}, {store.country.name}
-        </Row>
-        <Row label="Téléphone">{store.phone}</Row>
-        <Row label="Registre du commerce">{store.tradeRegister}</Row>
-        <Row label="Inscription">
-          {store.selfRegistered ? "Depuis l’application" : "Par un administrateur"}, le{" "}
-          {formatDate(store.createdAt)}
-        </Row>
-        <Row label="Vérification">{store.verifiedAt ? `Le ${formatDate(store.verifiedAt)}` : "—"}</Row>
-      </Rows>
-    </>
   );
 }
 
@@ -181,26 +158,6 @@ function Managers({ store }: { store: StoreDetail }) {
           ))}
         </ul>
       )}
-    </>
-  );
-}
-
-function Settings({ store }: { store: StoreDetail }) {
-  const money = { symbol: store.country.currencySymbol, decimals: store.country.decimals };
-  const { settings } = store;
-  return (
-    <>
-      <Rows>
-        <Row label="Solde maximum">{formatMoney(settings.maxBalance, money)}</Row>
-        <Row label="Seuil de validation">{formatMoney(settings.validationThreshold, money)}</Row>
-        <Row label="Dépôt minimum">{formatMoney(settings.minDeposit, money)}</Row>
-        <Row label="Délai de livraison">
-          {settings.deliveryDelayDays} jour{settings.deliveryDelayDays > 1 ? "s" : ""}
-        </Row>
-        <Row label="Conditions">
-          {settings.terms ? <span className="whitespace-pre-line">{settings.terms}</span> : "Aucune"}
-        </Row>
-      </Rows>
     </>
   );
 }
