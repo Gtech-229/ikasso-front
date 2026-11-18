@@ -341,13 +341,35 @@ function useFieldError(form: FormApi, name: FormPath): string | undefined {
   return form.getFieldState(name, formState).error?.message;
 }
 
+/**
+ * Registers a field so that, once it shows an error (after "Suivant" or the
+ * submit), it is re-checked as it is edited and the error clears when fixed.
+ * Untouched fields stay quiet: nothing is validated before a step check.
+ * `alsoRecheck`: a field whose rule depends on this one (minimum deposit vs
+ * maximum balance).
+ */
+function registerRechecking(form: FormApi, name: FormPath, alsoRecheck?: FormPath) {
+  return form.register(name, {
+    onChange: () => {
+      if (form.getFieldState(name).error) void form.trigger(name);
+      if (alsoRecheck && form.getFieldState(alsoRecheck).error) void form.trigger(alsoRecheck);
+    },
+  });
+}
+
 function TextField({
   form,
   name,
   label,
   hint,
   type = "text",
-}: FieldSpec & { form: FormApi; hint?: string; type?: string }) {
+  inputMode,
+}: FieldSpec & {
+  form: FormApi;
+  hint?: string;
+  type?: string;
+  inputMode?: React.HTMLAttributes<HTMLInputElement>["inputMode"];
+}) {
   const id = fieldId(name);
   const message = useFieldError(form, name);
   const describedBy = [hint ? `${id}-hint` : null, message ? `${id}-error` : null].filter(Boolean).join(" ");
@@ -359,8 +381,9 @@ function TextField({
         type={type}
         autoComplete="off"
         aria-invalid={message ? true : undefined}
+        inputMode={inputMode}
         aria-describedby={describedBy || undefined}
-        {...form.register(name)}
+        {...registerRechecking(form, name)}
       />
       {hint && <FieldDescription id={`${id}-hint`}>{hint}</FieldDescription>}
       <FieldError id={`${id}-error`}>{message}</FieldError>
@@ -387,7 +410,7 @@ function AmountField({
           autoComplete="off"
           aria-invalid={message ? true : undefined}
           aria-describedby={message ? `register-amount-hint ${id}-error` : "register-amount-hint"}
-          {...form.register(name)}
+          {...registerRechecking(form, name, name === "settings.maxBalance" ? "settings.minDeposit" : undefined)}
         />
         <span aria-hidden="true" className="text-[15px] text-muted-ink">
           {symbol}
@@ -443,6 +466,7 @@ function SettingsStep({ form, country }: { form: FormApi; country: Country }) {
       <TextField
         form={form}
         name="settings.deliveryDelayDays"
+        inputMode="numeric"
         label="Délai de livraison (jours, facultatif)"
         hint="1 à 365 jours. Laissé vide, la plateforme applique 30 jours."
       />
@@ -456,7 +480,7 @@ function SettingsStep({ form, country }: { form: FormApi; country: Country }) {
           aria-describedby={
             termsError ? "register-settings-terms-count register-settings-terms-error" : "register-settings-terms-count"
           }
-          {...form.register("settings.terms")}
+          {...registerRechecking(form, "settings.terms")}
         />
         <p id="register-settings-terms-count" className="text-right text-[13px] text-muted-ink">
           {terms.trim().length.toLocaleString("fr-FR")} / {TERMS_MAX.toLocaleString("fr-FR")}
