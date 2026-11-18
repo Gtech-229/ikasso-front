@@ -23,11 +23,22 @@ export const MIN_DEPOSIT_ABOVE_MAX_BALANCE = "Le dépôt minimum ne peut pas dé
 const DELIVERY_DELAY_MESSAGE = "Le délai de livraison doit être un nombre entier de jours, de 1 à 365";
 export const TERMS_MAX = 10_000;
 
+/**
+ * The API's message describes its own format (no decimals). It also fits the
+ * form for 0-decimal currencies (XOF); with decimals the form accepts "12,50",
+ * so it says how many decimals are allowed instead.
+ */
+export function amountMessage(decimals: number): string {
+  if (decimals === 0) return AMOUNT_RULE_MESSAGE;
+  const example = `12,${"5".padEnd(decimals, "0")}`;
+  return `Le montant doit être positif, avec au plus ${decimals} décimale${decimals > 1 ? "s" : ""} (ex. "${example}")`;
+}
+
 /** Form values are the typed text; `decimals` is the store currency's. */
 export function storeSettingsFormSchema(decimals: number) {
   const amount = z
     .string()
-    .refine((value) => toMinorUnits(value, decimals) !== null, { error: AMOUNT_RULE_MESSAGE });
+    .refine((value) => toMinorUnits(value, decimals) !== null, { error: amountMessage(decimals) });
   return z
     .object({
       maxBalance: amount,

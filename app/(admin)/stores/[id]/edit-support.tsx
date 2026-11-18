@@ -31,11 +31,18 @@ export function showSaveError<T extends FieldValues>(
  * The store was closed meanwhile (409 STORE_CLOSED): tell the admin, leave edit
  * mode and reload, so the page shows the closed store without edit buttons.
  */
-export function handleStoreClosed(error: unknown, queryClient: QueryClient, storeId: string, leave: () => void): boolean {
+export function handleStoreClosed(
+  error: unknown,
+  queryClient: QueryClient,
+  storeId: string,
+  leave: () => void,
+  focusAfterReload: () => void,
+): boolean {
   if (!isApiError(error) || error.error !== "STORE_CLOSED") return false;
   toast.error(error.message);
   leave();
-  void queryClient.invalidateQueries({ queryKey: storeDetailQueryKey(storeId) });
+  // "Modifier" disappears with the reload: focus the panel itself once it is done.
+  void queryClient.invalidateQueries({ queryKey: storeDetailQueryKey(storeId) }).then(focusAfterReload);
   return true;
 }
 

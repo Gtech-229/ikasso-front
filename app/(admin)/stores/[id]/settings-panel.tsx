@@ -2,7 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -37,6 +37,7 @@ export function SettingsPanel({ store }: { store: StoreDetail }) {
   const canEdit = !!admin && can(admin, "store-settings.manage") && store.status !== "CLOSED";
   const [editing, setEditing] = useState(false);
   const editButton = useRef<HTMLButtonElement>(null);
+  const panel = useRef<HTMLDivElement>(null);
   const money = { symbol: store.country.currencySymbol, decimals: store.country.decimals };
   const { settings } = store;
 
@@ -45,36 +46,54 @@ export function SettingsPanel({ store }: { store: StoreDetail }) {
     requestAnimationFrame(() => editButton.current?.focus());
   }
 
-  if (editing && canEdit) return <SettingsForm store={store} onLeave={leave} />;
-
   return (
-    <div className="flex flex-col gap-5">
-      <Rows>
-        <Row label="Solde maximum">{formatMoney(settings.maxBalance, money)}</Row>
-        <Row label="Seuil de validation">{formatMoney(settings.validationThreshold, money)}</Row>
-        <Row label="Dépôt minimum">{formatMoney(settings.minDeposit, money)}</Row>
-        <Row label="Délai de livraison">
-          {settings.deliveryDelayDays} jour{settings.deliveryDelayDays > 1 ? "s" : ""}
-        </Row>
-        <Row label="Conditions">
-          {settings.terms ? <span className="whitespace-pre-line">{settings.terms}</span> : "Aucune"}
-        </Row>
-      </Rows>
-      {canEdit && (
-        <div>
-          <Button ref={editButton} variant="secondary" onClick={() => setEditing(true)}>
-            Modifier
-          </Button>
-        </div>
+    <div
+      ref={panel}
+      // Focus target when "Modifier" disappears (store closed meanwhile).
+      tabIndex={-1}
+      className="flex flex-col gap-5 rounded-control outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+    >
+      {editing && canEdit ? (
+        <SettingsForm store={store} onLeave={leave} onClosed={() => panel.current?.focus()} />
+      ) : (
+        <>
+          <Rows>
+            <Row label="Solde maximum">{formatMoney(settings.maxBalance, money)}</Row>
+            <Row label="Seuil de validation">{formatMoney(settings.validationThreshold, money)}</Row>
+            <Row label="Dépôt minimum">{formatMoney(settings.minDeposit, money)}</Row>
+            <Row label="Délai de livraison">
+              {settings.deliveryDelayDays} jour{settings.deliveryDelayDays > 1 ? "s" : ""}
+            </Row>
+            <Row label="Conditions">
+              {settings.terms ? <span className="whitespace-pre-line">{settings.terms}</span> : "Aucune"}
+            </Row>
+          </Rows>
+          {canEdit && (
+            <div>
+              <Button ref={editButton} variant="secondary" onClick={() => setEditing(true)}>
+                Modifier
+              </Button>
+            </div>
+          )}
+        </>
       )}
     </div>
   );
 }
 
-function SettingsForm({ store, onLeave }: { store: StoreDetail; onLeave: () => void }) {
+function SettingsForm({
+  store,
+  onLeave,
+  onClosed,
+}: {
+  store: StoreDetail;
+  onLeave: () => void;
+  onClosed: () => void;
+}) {
   const queryClient = useQueryClient();
   const { decimals, currencySymbol } = store.country;
-  const initial = settingsFormValues(store.settings, decimals, fromMinorUnits);
+  // Starting values kept for the whole edit session (see the information form).
+  const [initial] = useState(() => settingsFormValues(store.settings, decimals, fromMinorUnits));
   const form = useForm<StoreSettingsFormValues>({
     resolver: zodResolver(storeSettingsFormSchema(decimals)),
     defaultValues: initial,
@@ -92,10 +111,12 @@ function SettingsForm({ store, onLeave }: { store: StoreDetail; onLeave: () => v
       onLeave();
     },
     onError: (error) => {
-      if (handleStoreClosed(error, queryClient, store.id, onLeave)) return;
+      if (handleStoreClosed(error, queryClient, store.id, onLeave, onClosed)) return;
       setAlert(showSaveError(error, form, FIELDS));
     },
   });
+
+  useEffect(() => form.setFocus("maxBalance"), [form]);
 
   const { errors, isDirty } = form.formState;
   const describe = (name: string, extra?: string) =>
