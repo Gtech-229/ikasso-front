@@ -28,7 +28,11 @@ export function StoresView() {
       <Kpis />
       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <StatusTabs params={params} />
-        <SearchBox params={params} />
+        <SearchBox
+          q={params.q}
+          hrefFor={(q) => storesListHref({ status: params.status, q, page: 1 })}
+          label="Rechercher une quincaillerie"
+        />
       </div>
       <StoresTable params={params} />
     </div>
@@ -105,8 +109,22 @@ function Tab({ tab, params }: { tab: (typeof TABS)[number]; params: StoresListPa
 const SEARCH_DELAY_MS = 300;
 const TOO_LONG = "La recherche doit contenir 1 à 100 caractères";
 
-function SearchBox({ params }: { params: StoresListParams }) {
-  const urlQ = params.q ?? "";
+/**
+ * Search by store name or city, written to the URL after a short pause.
+ * `hrefFor` gives the list URL for a search (page 1, other filters kept).
+ */
+export function SearchBox({
+  q,
+  hrefFor,
+  label,
+  id = "store-search",
+}: {
+  q: string | undefined;
+  hrefFor: (q: string | undefined) => string;
+  label: string;
+  id?: string;
+}) {
+  const urlQ = q ?? "";
   const [value, setValue] = useState(urlQ);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -120,30 +138,30 @@ function SearchBox({ params }: { params: StoresListParams }) {
   const trimmed = value.trim();
   const tooLong = [...trimmed].length > SEARCH_MAX_LENGTH;
 
+  // A string, so a new `hrefFor` function on each render does not restart the pause.
+  const target = hrefFor(trimmed || undefined);
   useEffect(() => {
     if (tooLong || trimmed === urlQ) return;
-    const timer = setTimeout(() => {
-      replaceStoresUrl(storesListHref({ status: params.status, q: trimmed || undefined, page: 1 }));
-    }, SEARCH_DELAY_MS);
+    const timer = setTimeout(() => replaceStoresUrl(target), SEARCH_DELAY_MS);
     return () => clearTimeout(timer);
-  }, [trimmed, tooLong, urlQ, params.status]);
+  }, [trimmed, tooLong, urlQ, target]);
 
   return (
     <div className="flex w-full flex-col gap-1 lg:max-w-sm">
-      <label htmlFor="store-search" className="sr-only">
-        Rechercher une quincaillerie
+      <label htmlFor={id} className="sr-only">
+        {label}
       </label>
       <div className="relative">
         <Search aria-hidden="true" className="pointer-events-none absolute top-1/2 left-3.5 size-5 -translate-y-1/2 text-muted-ink" />
         <Input
           ref={inputRef}
-          id="store-search"
+          id={id}
           type="search"
           placeholder="Nom ou ville"
           value={value}
           onChange={(event) => setValue(event.target.value)}
           aria-invalid={tooLong || undefined}
-          aria-describedby={tooLong ? "store-search-error" : undefined}
+          aria-describedby={tooLong ? `${id}-error` : undefined}
           className="pr-12 pl-11 [&::-webkit-search-cancel-button]:hidden"
         />
         {value && (
@@ -162,7 +180,7 @@ function SearchBox({ params }: { params: StoresListParams }) {
         )}
       </div>
       {tooLong && (
-        <p id="store-search-error" role="alert" className="text-sm text-danger">
+        <p id={`${id}-error`} role="alert" className="text-sm text-danger">
           {TOO_LONG}
         </p>
       )}

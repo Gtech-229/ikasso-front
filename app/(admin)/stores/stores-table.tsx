@@ -86,7 +86,12 @@ export function StoresTable({ params }: { params: StoresListParams }) {
         </div>
       )}
       {data && data.items.length > 0 && (
-        <Pagination params={params} total={data.total} totalPages={totalPages} />
+        <Pagination
+          page={params.page}
+          totalPages={totalPages}
+          summary={`${data.total} quincaillerie${data.total > 1 ? "s" : ""}`}
+          hrefFor={(page) => storesListHref({ ...params, page })}
+        />
       )}
     </section>
   );
@@ -155,21 +160,24 @@ function EmptyState({ params, total }: { params: StoresListParams; total: number
   );
 }
 
-function Pagination({
-  params,
-  total,
+/** Previous / next shallow links; `hrefFor` gives a page's list URL. */
+export function Pagination({
+  page,
   totalPages,
+  summary,
+  hrefFor,
 }: {
-  params: StoresListParams;
-  total: number;
+  page: number;
   totalPages: number;
+  summary: string;
+  hrefFor: (page: number) => string;
 }) {
-  const previous = params.page > 1 ? storesListHref({ ...params, page: params.page - 1 }) : null;
-  const next = params.page < totalPages ? storesListHref({ ...params, page: params.page + 1 }) : null;
+  const previous = page > 1 ? hrefFor(page - 1) : null;
+  const next = page < totalPages ? hrefFor(page + 1) : null;
   return (
     <nav aria-label="Pagination" className="flex flex-wrap items-center justify-between gap-3 px-2">
       <p className="text-[14px] text-muted-ink">
-        Page {params.page} sur {totalPages} · {total} quincaillerie{total > 1 ? "s" : ""}
+        Page {page} sur {totalPages} · {summary}
       </p>
       <div className="flex gap-2">
         <PageLink href={previous} label="Précédente" />
@@ -194,7 +202,7 @@ function PageLink({ href, label }: { href: string | null; label: string }) {
   );
 }
 
-function TableSkeleton() {
+export function TableSkeleton() {
   return (
     <div role="status" aria-label="Chargement de la liste" className="flex flex-col gap-2 p-2">
       {Array.from({ length: 6 }, (_, i) => (

@@ -2,6 +2,8 @@ import type { QueryClient } from "@tanstack/react-query";
 import {
   pendingStoresCountQueryKey,
   STORE_STATUSES,
+  SUBSCRIPTION_STATES,
+  type SubscriptionState,
   storeCountPath,
   storeCountQueryKey,
   type StoreStatus,
@@ -13,6 +15,12 @@ import {
  */
 export const STORE_COUNT_FILTERS: readonly (StoreStatus | undefined)[] = [undefined, ...STORE_STATUSES];
 
+/** The subscriptions page's counts: all stores, then each subscription state. */
+export const SUBSCRIPTION_COUNT_FILTERS: readonly (SubscriptionState | undefined)[] = [
+  undefined,
+  ...SUBSCRIPTION_STATES,
+];
+
 export function storeCountQuery(status?: StoreStatus) {
   return {
     queryKey: status === "PENDING" ? pendingStoresCountQueryKey : storeCountQueryKey(status),
@@ -23,7 +31,8 @@ export function storeCountQuery(status?: StoreStatus) {
 /**
  * After a store changes status: refresh the stores list, its counts and the
  * sidebar badge. Deliberately not the whole ["stores"] prefix, which would also
- * refetch the store detail and the private photos on screen. Every store
+ * refetch the store detail and the private photos on screen. The ["stores",
+ * "count"] prefix also covers the subscriptions page's counts. Every store
  * status action (verify, and feature 7 suspend / reactivate / close) uses this.
  */
 export function invalidateStoreLists(queryClient: QueryClient): void {

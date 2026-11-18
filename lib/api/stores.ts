@@ -6,7 +6,8 @@ export const STORE_STATUSES = ["PENDING", "VERIFIED", "SUSPENDED", "CLOSED"] as 
 export const storeStatusSchema = z.enum(STORE_STATUSES);
 export type StoreStatus = z.infer<typeof storeStatusSchema>;
 
-export const subscriptionStateSchema = z.enum(["ACTIVE", "UPCOMING", "EXPIRED", "NONE"]);
+export const SUBSCRIPTION_STATES = ["ACTIVE", "UPCOMING", "EXPIRED", "NONE"] as const;
+export const subscriptionStateSchema = z.enum(SUBSCRIPTION_STATES);
 export type SubscriptionState = z.infer<typeof subscriptionStateSchema>;
 
 const subscriptionSchema = z.object({
@@ -40,17 +41,24 @@ export const STORES_PAGE_SIZE = 20;
 
 export interface StoresListParams {
   status?: StoreStatus;
+  /** The subscriptions page filters on this instead of the status. */
+  subscriptionState?: SubscriptionState;
   q?: string;
   page: number;
 }
 
-export const storesQueryKey = ({ status, q, page }: StoresListParams) =>
-  ["stores", "list", { status: status ?? null, q: q ?? null, page }] as const;
+export const storesQueryKey = ({ status, subscriptionState, q, page }: StoresListParams) =>
+  [
+    "stores",
+    "list",
+    { status: status ?? null, subscriptionState: subscriptionState ?? null, q: q ?? null, page },
+  ] as const;
 
 /** `/admin/stores?...` for a page of the list (also used by the server prefetch). */
-export function storesPath({ status, q, page }: StoresListParams): string {
+export function storesPath({ status, subscriptionState, q, page }: StoresListParams): string {
   const search = new URLSearchParams({ page: String(page), pageSize: String(STORES_PAGE_SIZE) });
   if (status) search.set("status", status);
+  if (subscriptionState) search.set("subscriptionState", subscriptionState);
   if (q) search.set("q", q);
   return `/admin/stores?${search}`;
 }
@@ -73,6 +81,18 @@ export const countSchema = countPageSchema.transform((page) => page.total);
 
 export function fetchStoreCount(status?: StoreStatus): Promise<number> {
   return apiFetch(storeCountPath(status), { schema: countSchema });
+}
+
+/** The subscriptions page's KPI and tab counts, one per subscription state. */
+export const subscriptionCountQueryKey = (state?: SubscriptionState) =>
+  ["stores", "count", "subscription", state ?? "ALL"] as const;
+
+export function subscriptionCountPath(state?: SubscriptionState): string {
+  return `/admin/stores?${state ? `subscriptionState=${state}&` : ""}page=1&pageSize=1`;
+}
+
+export function fetchSubscriptionCount(state?: SubscriptionState): Promise<number> {
+  return apiFetch(subscriptionCountPath(state), { schema: countSchema });
 }
 
 /** Sidebar badge and the "À vérifier" KPI share this query. */

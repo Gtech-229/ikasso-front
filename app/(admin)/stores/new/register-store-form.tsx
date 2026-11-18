@@ -5,7 +5,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Check } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { useForm, useFormState, useWatch, type Path } from "react-hook-form";
+import { useForm, useWatch, type Path } from "react-hook-form";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
@@ -17,6 +17,7 @@ import { isApiError, UNEXPECTED_ERROR_MESSAGE } from "@/lib/api/errors";
 import { registerStore, storeDetailQueryKey } from "@/lib/api/stores";
 import { invalidateStoreLists } from "@/lib/api/stores-queries";
 import { formatMoney } from "@/lib/format";
+import { registerRechecking, useFieldError } from "@/lib/form-fields";
 import { toMinorUnits } from "@/lib/money-input";
 import {
   registerStoreBody,
@@ -334,28 +335,6 @@ function Stepper({
 }
 
 type FormApi = ReturnType<typeof useForm<RegisterStoreFormValues>>;
-
-/** The field's current error; subscribes this component to that field's state. */
-function useFieldError(form: FormApi, name: FormPath): string | undefined {
-  const formState = useFormState({ control: form.control, name });
-  return form.getFieldState(name, formState).error?.message;
-}
-
-/**
- * Registers a field so that, once it shows an error (after "Suivant" or the
- * submit), it is re-checked as it is edited and the error clears when fixed.
- * Untouched fields stay quiet: nothing is validated before a step check.
- * `alsoRecheck`: a field whose rule depends on this one (minimum deposit vs
- * maximum balance).
- */
-function registerRechecking(form: FormApi, name: FormPath, alsoRecheck?: FormPath) {
-  return form.register(name, {
-    onChange: () => {
-      if (form.getFieldState(name).error) void form.trigger(name);
-      if (alsoRecheck && form.getFieldState(alsoRecheck).error) void form.trigger(alsoRecheck);
-    },
-  });
-}
 
 function TextField({
   form,
