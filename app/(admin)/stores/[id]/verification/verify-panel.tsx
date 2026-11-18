@@ -14,8 +14,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { isApiError, UNEXPECTED_ERROR_MESSAGE } from "@/lib/api/errors";
+import { invalidateStoreLists } from "@/lib/api/stores-queries";
 import {
-  pendingStoresCountQueryKey,
   STORE_STATUS_LABELS,
   storeDetailQueryKey,
   verifyStore,
@@ -56,7 +56,7 @@ export function VerifyPanel({ store }: { store: StoreDetail }) {
 
   return (
     <aside aria-labelledby="verify-title" className="flex h-fit flex-col gap-4 rounded-card bg-surface p-6">
-      <h2 id="verify-title" className="font-display text-[22px] font-bold">
+      <h2 id="verify-title" tabIndex={-1} className="font-display text-[22px] font-bold outline-none">
         Vérifications
       </h2>
       {body}
@@ -118,28 +118,37 @@ function ConfirmVerify({
     mutationFn: () => verifyStore(store.id),
     onSuccess: (updated) => {
       queryClient.setQueryData(storeDetailQueryKey(store.id), updated);
-      // The list, its counts and the sidebar badge; not the photos on screen.
-      void queryClient.invalidateQueries({ queryKey: ["stores", "list"] });
-      void queryClient.invalidateQueries({ queryKey: ["stores", "count"] });
-      void queryClient.invalidateQueries({ queryKey: pendingStoresCountQueryKey });
+      invalidateStoreLists(queryClient);
       toast.success("Quincaillerie vérifiée.");
       onOpenChange(false);
     },
-    onError: (error) => {
-      // Someone else already changed the status: show the current state.
-      if (isApiError(error) && error.error === "INVALID_STATUS_TRANSITION") {
-        void queryClient.invalidateQueries({ queryKey: storeDetailQueryKey(store.id) });
-      }
-    },
   });
+
+  // Someone else already changed the status: keep the dialog and its message
+  // until the admin closes it, then load the current state.
+  const statusChanged = isApiError(mutation.error) && mutation.error.error === "INVALID_STATUS_TRANSITION";
+
+  // The one way to close (Annuler, Escape, outside press): never mid-request,
+  // and the next opening starts without the previous error.
+  function close() {
+    if (mutation.isPending) return;
+    const reload = statusChanged;
+    mutation.reset();
+    onOpenChange(false);
+    if (reload) {
+      void queryClient
+        .invalidateQueries({ queryKey: storeDetailQueryKey(store.id) })
+        // The trigger button is gone with the checklist: give focus a home.
+        .then(() => document.getElementById("verify-title")?.focus());
+    }
+  }
 
   return (
     <AlertDialog
       open={open}
       onOpenChange={(next) => {
-        if (mutation.isPending) return; // never close mid-request
-        if (!next) mutation.reset();
-        onOpenChange(next);
+        if (next) onOpenChange(true);
+        else close();
       }}
     >
       <AlertDialogContent className="sm:max-w-md">
@@ -153,10 +162,15 @@ function ConfirmVerify({
           </p>
         )}
         <AlertDialogFooter>
-          <Button variant="secondary" disabled={mutation.isPending} onClick={() => onOpenChange(false)}>
-            Annuler
+          <Button variant="secondary" disabled={mutation.isPending} onClick={close}>
+            {statusChanged ? "Fermer" : "Annuler"}
           </Button>
-          <Button variant="action" disabled={mutation.isPending} onClick={() => mutation.mutate()}>
+          <Button
+            variant="action"
+            // Retrying cannot succeed once the status changed elsewhere.
+            disabled={mutation.isPending || statusChanged}
+            onClick={() => mutation.mutate()}
+          >
             {mutation.isPending ? "Validation…" : "Valider"}
           </Button>
         </AlertDialogFooter>

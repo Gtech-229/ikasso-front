@@ -59,13 +59,13 @@ export async function toApiError(response: Response): Promise<ApiError> {
     : ApiError.unexpected(response.status);
 }
 
-/** Turns a response into parsed data, or throws an ApiError. */
 /** A binary success body, or the API error parsed as usual. */
 export async function parseBlob(response: Response): Promise<Blob> {
   if (!response.ok) throw await toApiError(response);
   return response.blob();
 }
 
+/** Turns a response into parsed data, or throws an ApiError. */
 export async function parseResponse<T>(
   response: Response,
   schema: z.ZodType<T> | undefined,

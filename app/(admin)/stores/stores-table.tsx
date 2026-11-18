@@ -4,7 +4,7 @@ import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { Forbidden } from "@/components/forbidden";
 import { StatusPill, STORE_STATUS_TONES, SUBSCRIPTION_STATE_TONES } from "@/components/status-pill";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
@@ -39,7 +39,7 @@ export function StoresTable({ params }: { params: StoresListParams }) {
   });
 
   if (query.isError) {
-    if (isForbidden(query.error)) return <Forbidden />;
+    if (isForbidden(query.error)) return <Forbidden embedded />;
     return (
       <div role="alert" className="flex flex-col items-start gap-3 rounded-card bg-surface p-6">
         <p className="text-[15px] text-danger">
@@ -119,14 +119,13 @@ function StoreRow({ store }: { store: StoreSummary }) {
       </TableCell>
       <TableCell>{formatDate(store.createdAt)}</TableCell>
       <TableCell className="text-right">
-        <Button
-          variant={pending ? "action" : "secondary"}
-          render={<Link href={pending ? `/stores/${store.id}/verification` : `/stores/${store.id}`} />}
-          nativeButton={false}
+        <Link
+          href={pending ? `/stores/${store.id}/verification` : `/stores/${store.id}`}
+          className={buttonVariants({ variant: pending ? "action" : "secondary" })}
           aria-label={`${pending ? "Examiner" : "Ouvrir"} ${store.name}`}
         >
           {pending ? "Examiner" : "Ouvrir"}
-        </Button>
+        </Link>
       </TableCell>
     </TableRow>
   );
@@ -148,9 +147,9 @@ function EmptyState({ params, total }: { params: StoresListParams; total: number
     <div role="status" className="flex flex-col items-center gap-3 px-4 py-12 text-center">
       <p className="text-[15px] text-muted-ink">{message}</p>
       {action && (
-        <Button variant="secondary" render={<ShallowLink href={action.href} />} nativeButton={false}>
+        <ShallowLink href={action.href} className={buttonVariants({ variant: "secondary" })}>
           {action.label}
-        </Button>
+        </ShallowLink>
       )}
     </div>
   );
@@ -189,9 +188,9 @@ function PageLink({ href, label }: { href: string | null; label: string }) {
     );
   }
   return (
-    <Button variant="secondary" render={<ShallowLink href={href} />} nativeButton={false}>
+    <ShallowLink href={href} className={buttonVariants({ variant: "secondary" })}>
       {label}
-    </Button>
+    </ShallowLink>
   );
 }
 

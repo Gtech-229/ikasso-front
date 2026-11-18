@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 
 // Unknown paths and sections not built yet, inside the shell.
 export default function AdminNotFound() {
@@ -8,9 +8,9 @@ export default function AdminNotFound() {
       <section className="flex max-w-md flex-col items-start gap-4 rounded-card bg-surface p-8">
         <h1 className="font-display text-[22px] font-bold">Page introuvable</h1>
         <p className="text-[15px] text-muted-ink">Cette page n’existe pas ou n’est pas encore disponible.</p>
-        <Button variant="secondary" render={<Link href="/" />} nativeButton={false}>
+        <Link href="/" className={buttonVariants({ variant: "secondary" })}>
           Retour à l’accueil
-        </Button>
+        </Link>
       </section>
     </div>
   );

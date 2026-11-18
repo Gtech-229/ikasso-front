@@ -1,3 +1,4 @@
+import type { QueryClient } from "@tanstack/react-query";
 import {
   pendingStoresCountQueryKey,
   STORE_STATUSES,
@@ -17,4 +18,16 @@ export function storeCountQuery(status?: StoreStatus) {
     queryKey: status === "PENDING" ? pendingStoresCountQueryKey : storeCountQueryKey(status),
     path: storeCountPath(status),
   };
+}
+
+/**
+ * After a store changes status: refresh the stores list, its counts and the
+ * sidebar badge. Deliberately not the whole ["stores"] prefix, which would also
+ * refetch the store detail and the private photos on screen. Every store
+ * status action (verify, and feature 7 suspend / reactivate / close) uses this.
+ */
+export function invalidateStoreLists(queryClient: QueryClient): void {
+  void queryClient.invalidateQueries({ queryKey: ["stores", "list"] });
+  void queryClient.invalidateQueries({ queryKey: ["stores", "count"] });
+  void queryClient.invalidateQueries({ queryKey: pendingStoresCountQueryKey });
 }

@@ -16,5 +16,6 @@ export async function RequirePermission({
   children: React.ReactNode;
 }) {
   const admin = await getCurrentAdmin();
-  return can(admin, permission) ? children : <Forbidden />;
+  // Rendered inside the page, under its title: the embedded variant.
+  return can(admin, permission) ? children : <Forbidden embedded />;
 }

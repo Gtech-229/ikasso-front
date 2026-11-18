@@ -1,19 +1,26 @@
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
-/** A page or data the admin's role may not open (UI rule or API 403). */
-export function Forbidden() {
+/**
+ * A page or data the admin's role may not open (UI rule or API 403).
+ * `embedded`: inside a page that already has its title and padding, so a
+ * sub-heading and no outer spacing.
+ */
+export function Forbidden({ embedded = false }: { embedded?: boolean }) {
+  const Heading = embedded ? "h2" : "h1";
   return (
-    <div className="p-5 md:p-8">
+    <div className={embedded ? undefined : "p-5 md:p-8"}>
       <section
         role="alert"
         className="flex max-w-md flex-col items-start gap-4 rounded-card bg-surface p-8"
       >
-        <h1 className="font-display text-[22px] font-bold">Accès refusé</h1>
+        <Heading className="font-display text-[22px] font-bold">Accès refusé</Heading>
         <p className="text-[15px] text-muted-ink">Votre rôle ne permet pas d’ouvrir cette page.</p>
-        <Button variant="secondary" render={<Link href="/" />} nativeButton={false}>
+        {/* A real link styled as a button: announced as a link. */}
+        <Link href="/" className={cn(buttonVariants({ variant: "secondary" }))}>
           Retour à l’accueil
-        </Button>
+        </Link>
       </section>
     </div>
   );

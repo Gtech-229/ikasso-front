@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { Forbidden } from "@/components/forbidden";
 import { StatusPill, STORE_STATUS_TONES } from "@/components/status-pill";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { isApiError, isForbidden, UNEXPECTED_ERROR_MESSAGE } from "@/lib/api/errors";
 import {
@@ -29,16 +29,16 @@ export function VerificationView({ id }: { id: string }) {
   if (query.isPending) return <VerificationSkeleton />;
   if (query.isError) {
     const error = query.error;
-    if (isForbidden(error)) return <Forbidden />;
+    if (isForbidden(error)) return <Forbidden embedded />;
     // 400: not a valid store id; 404: no such store.
     if (isApiError(error) && (error.statusCode === 404 || error.statusCode === 400)) {
       return (
         <section role="status" className="flex max-w-md flex-col items-start gap-4 rounded-card bg-surface p-6">
           <h2 className="font-display text-[22px] font-bold">Quincaillerie introuvable</h2>
           <p className="text-[15px] text-muted-ink">Cette quincaillerie n’existe pas ou a été supprimée.</p>
-          <Button variant="secondary" render={<Link href="/stores" />} nativeButton={false}>
+          <Link href="/stores" className={buttonVariants({ variant: "secondary" })}>
             Retour à la liste
-          </Button>
+          </Link>
         </section>
       );
     }

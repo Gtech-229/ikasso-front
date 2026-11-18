@@ -3,7 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { Search, X } from "lucide-react";
 import { useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
 import { fetchStoreCount, STORE_STATUS_LABELS, type StoreStatus, type StoresListParams } from "@/lib/api/stores";
@@ -108,6 +108,7 @@ const TOO_LONG = "La recherche doit contenir 1 à 100 caractères";
 function SearchBox({ params }: { params: StoresListParams }) {
   const urlQ = params.q ?? "";
   const [value, setValue] = useState(urlQ);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   // Follow the URL when it changes from outside (tab link, "Effacer", Back).
   const [seenQ, setSeenQ] = useState(urlQ);
@@ -135,6 +136,7 @@ function SearchBox({ params }: { params: StoresListParams }) {
       <div className="relative">
         <Search aria-hidden="true" className="pointer-events-none absolute top-1/2 left-3.5 size-5 -translate-y-1/2 text-muted-ink" />
         <Input
+          ref={inputRef}
           id="store-search"
           type="search"
           placeholder="Nom ou ville"
@@ -147,7 +149,11 @@ function SearchBox({ params }: { params: StoresListParams }) {
         {value && (
           <button
             type="button"
-            onClick={() => setValue("")}
+            onClick={() => {
+              setValue("");
+              // The button disappears once the field is empty: keep focus in the search.
+              inputRef.current?.focus();
+            }}
             aria-label="Effacer la recherche"
             className="absolute inset-y-0 right-0 flex w-11 items-center justify-center text-muted-ink hover:text-ink"
           >

@@ -7,7 +7,7 @@ import { useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { AuthHeading } from "@/components/auth-layout";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import {
   Field,
   FieldError,
@@ -181,9 +181,9 @@ function ChoosePassword({ mode, token }: { mode: PasswordLinkMode; token: string
         <p role="status" className="mb-6 rounded-control bg-canvas px-4 py-3 text-[15px]">
           Mot de passe enregistré. Connectez-vous avec votre nouveau mot de passe.
         </p>
-        <Button className="w-full" render={<Link href="/login" />} nativeButton={false}>
+        <Link href="/login" className={buttonVariants({ className: "w-full" })}>
           Se connecter
-        </Button>
+        </Link>
       </>
     );
   }
