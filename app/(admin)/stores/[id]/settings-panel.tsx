@@ -22,7 +22,7 @@ import {
   TERMS_MAX,
   type StoreSettingsFormValues,
 } from "@/lib/store-forms";
-import { handleStoreClosed, SaveAlert, showSaveError } from "./edit-support";
+import { handleStoreClosed, SaveAlert, showSaveError } from "../edit-support";
 import { Row, Rows } from "./rows";
 
 const AMOUNTS = [

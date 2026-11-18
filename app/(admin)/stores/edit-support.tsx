@@ -14,13 +14,17 @@ export function showSaveError<T extends FieldValues>(
   error: unknown,
   form: UseFormReturn<T>,
   fields: readonly Path<T>[],
+  // Maps an API field path to the form's, when the form nests differently.
+  toFormField: (apiField: string) => string = (apiField) => apiField,
 ): string | null {
   if (!isApiError(error)) return UNEXPECTED_ERROR_MESSAGE;
   let placed = false;
   for (const detail of error.details) {
-    const field = fields.find((name) => name === detail.field);
+    const formField = toFormField(detail.field);
+    const field = fields.find((name) => name === formField);
     if (field && detail.errors[0]) {
-      form.setError(field, { message: detail.errors[0] });
+      // Focus the first field the API refused.
+      form.setError(field, { message: detail.errors[0] }, { shouldFocus: !placed });
       placed = true;
     }
   }

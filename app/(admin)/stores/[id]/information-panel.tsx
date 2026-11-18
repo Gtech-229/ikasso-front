@@ -14,7 +14,7 @@ import { can } from "@/lib/auth/permissions";
 import { useCurrentAdmin } from "@/lib/auth/use-current-admin";
 import { formatDate } from "@/lib/format";
 import { changedFields, storeInfoSchema, type StoreInfoValues } from "@/lib/store-forms";
-import { handleStoreClosed, SaveAlert, showSaveError } from "./edit-support";
+import { handleStoreClosed, SaveAlert, showSaveError } from "../edit-support";
 import { Row, Rows } from "./rows";
 
 const FIELDS = ["name", "address", "city", "phone", "tradeRegister"] as const;

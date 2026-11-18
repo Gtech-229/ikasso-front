@@ -208,3 +208,25 @@ export type StoreSettingsChanges = Partial<{
 export function updateStoreSettings(id: string, changes: StoreSettingsChanges): Promise<StoreDetail> {
   return apiFetch(`${storeDetailPath(id)}/settings`, { method: "PATCH", body: changes, schema: storeDetailSchema });
 }
+
+export interface RegisterStoreBody {
+  countryCode: string;
+  name: string;
+  address: string;
+  city: string;
+  phone: string;
+  tradeRegister: string;
+  settings: {
+    maxBalance: string;
+    validationThreshold: string;
+    minDeposit: string;
+    deliveryDelayDays?: number;
+    terms?: string;
+  };
+  manager: { firstName: string; lastName: string; phone: string };
+}
+
+/** Registers a store as PENDING with its first manager (guard `stores.manage`). */
+export function registerStore(body: RegisterStoreBody): Promise<StoreDetail> {
+  return apiFetch("/admin/stores", { method: "POST", body, schema: storeDetailSchema });
+}
