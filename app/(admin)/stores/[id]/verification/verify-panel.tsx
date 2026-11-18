@@ -1,6 +1,7 @@
 "use client";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import Link from "next/link";
 import { useState } from "react";
 import { toast } from "sonner";
 import {
@@ -11,7 +12,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { isApiError, UNEXPECTED_ERROR_MESSAGE } from "@/lib/api/errors";
 import { invalidateStoreLists } from "@/lib/api/stores-queries";
@@ -39,9 +40,14 @@ export function VerifyPanel({ store }: { store: StoreDetail }) {
   let body: React.ReactNode;
   if (store.status !== "PENDING") {
     body = (
-      <p className="text-[15px] text-muted-ink">
-        Ce dossier n’est plus à vérifier ({STORE_STATUS_LABELS[store.status]}).
-      </p>
+      <>
+        <p className="text-[15px] text-muted-ink">
+          Ce dossier n’est plus à vérifier ({STORE_STATUS_LABELS[store.status]}).
+        </p>
+        <Link href={`/stores/${store.id}`} className={buttonVariants({ variant: "secondary" })}>
+          Ouvrir la fiche
+        </Link>
+      </>
     );
   } else if (!canManage) {
     body = (

@@ -102,7 +102,18 @@ export const PLAN_LABELS: Record<z.infer<typeof subscriptionSchema>["plan"], str
   PRO: "Pro",
 };
 
-/** `GET /admin/stores/:id`. Settings stay loose here; the detail page (feature 7) reads them. */
+/** Amounts are integer strings in the currency's smallest unit ("200000"). */
+export const storeSettingsSchema = z.object({
+  maxBalance: z.string(),
+  validationThreshold: z.string(),
+  minDeposit: z.string(),
+  refundAllowed: z.boolean(),
+  reservationEnabled: z.boolean(),
+  terms: z.string().nullable(),
+  deliveryDelayDays: z.number().int(),
+});
+
+/** `GET /admin/stores/:id`. */
 export const storeDetailSchema = z.object({
   id: z.string(),
   name: z.string(),
@@ -120,7 +131,7 @@ export const storeDetailSchema = z.object({
     currencySymbol: z.string(),
     decimals: z.number().int(),
   }),
-  settings: z.record(z.string(), z.unknown()),
+  settings: storeSettingsSchema,
   managers: z.array(
     z.object({ userId: z.string(), firstName: z.string(), lastName: z.string(), phone: z.string() }),
   ),
@@ -161,4 +172,19 @@ export function fetchStoreDocument(id: string, kind: StoreDocumentKind): Promise
 /** PENDING -> VERIFIED (guard `stores.manage`). */
 export function verifyStore(id: string): Promise<StoreDetail> {
   return apiFetch(`${storeDetailPath(id)}/verify`, { method: "PATCH", schema: storeDetailSchema });
+}
+
+/** VERIFIED -> SUSPENDED, with a reason kept by the API. */
+export function suspendStore(id: string, reason: string): Promise<StoreDetail> {
+  return apiFetch(`${storeDetailPath(id)}/suspend`, { method: "PATCH", body: { reason }, schema: storeDetailSchema });
+}
+
+/** SUSPENDED -> VERIFIED; the API clears the suspension reason. */
+export function reactivateStore(id: string): Promise<StoreDetail> {
+  return apiFetch(`${storeDetailPath(id)}/reactivate`, { method: "PATCH", schema: storeDetailSchema });
+}
+
+/** PENDING / VERIFIED / SUSPENDED -> CLOSED, final, with a reason. */
+export function closeStore(id: string, reason: string): Promise<StoreDetail> {
+  return apiFetch(`${storeDetailPath(id)}/close`, { method: "PATCH", body: { reason }, schema: storeDetailSchema });
 }
