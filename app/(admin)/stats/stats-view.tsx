@@ -155,8 +155,11 @@ function ToHandle({ figures }: { figures: Figures }) {
       value: figures.stores.bySubscription.EXPIRED,
       href: admin && can(admin, "subscriptions.read") ? "/subscriptions?state=EXPIRED" : undefined,
     },
-    // The support page (disputes) is a later feature: no link yet.
-    { label: "Contestations en cours", value: figures.trust.disputesUnresolved, href: undefined },
+    {
+      label: "Contestations en cours",
+      value: figures.trust.disputesUnresolved,
+      href: admin && can(admin, "disputes.read") ? "/support" : undefined,
+    },
   ];
   return (
     <section

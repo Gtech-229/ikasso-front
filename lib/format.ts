@@ -36,6 +36,17 @@ export function formatMoney(amount: string, { symbol, decimals }: MoneyFormat): 
 }
 
 /**
+ * An amount whose currency format is unknown (no country to hand): the integer
+ * in the smallest unit, grouped, with the currency code ("15000" -> "15 000 XOF").
+ */
+export function formatMinorUnits(amount: string, currencyCode: string): string {
+  if (!AMOUNT_PATTERN.test(amount)) {
+    throw new Error(`Montant invalide : ${JSON.stringify(amount)}`);
+  }
+  return `${integerFormat.format(BigInt(amount))} ${currencyCode}`;
+}
+
+/**
  * Every timestamp is shown in one fixed zone, so the server render and the
  * browser render produce the same text (no hydration mismatch). UTC+0, the
  * zone of both pilot countries (Mali, Côte d'Ivoire).
