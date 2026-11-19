@@ -7,7 +7,9 @@ type Readable = { get(name: string): string | null };
 /** The API's INVALID_PERIOD message, shown on "Au" before any request. */
 export const PERIOD_ERROR = "Le dernier jour doit être le même que le premier ou après";
 
-const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+/** The API's `@IsUUID("all")`: version 1-8 and variant 8/9/a/b, or the nil or max UUID. */
+const UUID_PATTERN =
+  /^(?:[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$/i;
 
 function isAction(value: string | null): value is ActivityAction {
   return (ACTIVITY_ACTIONS as readonly string[]).includes(value ?? "");
