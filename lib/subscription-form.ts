@@ -8,7 +8,7 @@ const DAY_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 export const PERIOD_MESSAGE = "La date de fin doit être le même jour que la date de début ou après";
 
 /** A real calendar day as `YYYY-MM-DD` (what `<input type="date">` gives). */
-function isDay(value: string): boolean {
+export function isDay(value: string): boolean {
   if (!DAY_PATTERN.test(value)) return false;
   const date = new Date(`${value}T00:00:00.000Z`);
   return !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === value;

@@ -83,6 +83,17 @@ export function fetchStoreCount(status?: StoreStatus): Promise<number> {
   return apiFetch(storeCountPath(status), { schema: countSchema });
 }
 
+/**
+ * Up to 100 stores (the API's largest page), for a store filter select. Under
+ * ["stores","list"], so store changes refresh it too.
+ */
+export const storeOptionsQueryKey = ["stores", "list", "options"] as const;
+export const STORE_OPTIONS_PATH = "/admin/stores?page=1&pageSize=100";
+
+export function fetchStoreOptions() {
+  return apiFetch(STORE_OPTIONS_PATH, { schema: storesPageSchema });
+}
+
 /** The subscriptions page's KPI and tab counts, one per subscription state. */
 export const subscriptionCountQueryKey = (state?: SubscriptionState) =>
   ["stores", "count", "subscription", state ?? "ALL"] as const;
