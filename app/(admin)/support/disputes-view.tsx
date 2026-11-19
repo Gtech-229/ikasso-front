@@ -2,7 +2,6 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { useSearchParams } from "next/navigation";
-import { Skeleton } from "@/components/ui/skeleton";
 import { DISPUTE_STATUS_LABELS, disputeCountQueryKey, fetchDisputeCount, type DisputeStatus } from "@/lib/api/disputes";
 import { disputesListHref, parseDisputesListParams } from "@/lib/disputes-list-params";
 import { PillLink } from "../stores/pill-link";
@@ -40,15 +39,5 @@ function Filter({ status, label, active }: { status?: DisputeStatus; label: stri
   }).data;
   return (
     <PillLink href={disputesListHref({ status, page: 1 })} active={active} label={label} count={count ?? null} />
-  );
-}
-
-export function DisputesSkeleton() {
-  return (
-    <div role="status" aria-label="Chargement des contestations" className="flex flex-col gap-4">
-      <Skeleton className="h-7 w-48 rounded-control" />
-      <Skeleton className="h-11 w-full max-w-xl rounded-full" />
-      <Skeleton className="h-96 rounded-card" />
-    </div>
   );
 }

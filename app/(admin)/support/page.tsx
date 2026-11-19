@@ -24,7 +24,7 @@ import {
 } from "@/lib/api/disputes";
 import { serverFetch } from "@/lib/api/server";
 import { getCurrentAdmin } from "@/lib/auth/current-admin";
-import { can } from "@/lib/auth/permissions";
+import { can, isSuperAdmin } from "@/lib/auth/permissions";
 import { parseDisputesListParams } from "@/lib/disputes-list-params";
 import { getQueryClient } from "@/lib/query/get-query-client";
 import { parseAlertsListParams, parseSupportTab, supportTabs } from "@/lib/support-params";
@@ -82,7 +82,7 @@ async function PrefetchedSupport({ searchParams }: Pick<PageProps<"/support">, "
         }),
     ]);
   } else {
-    const params = parseAlertsListParams(search);
+    const params = parseAlertsListParams(search, { superAdmin: isSuperAdmin(admin) });
     await Promise.all([
       queryClient.prefetchQuery({
         queryKey: alertsQueryKey(params),

@@ -29,13 +29,22 @@ function isAlertType(value: string | null): value is AlertType {
   return (ALERT_TYPES as readonly string[]).includes(value ?? "");
 }
 
-/** `/support?tab=alerts&state=resolved&type=GOAL_SUM_GAP&page=2`; defaults: open, all types, page 1. */
-export function parseAlertsListParams(search: Readable): AlertsListParams {
+/** The types this admin can see: the API lists WhatsApp settings changes to the super admin only. */
+export function visibleAlertTypes(superAdmin: boolean): AlertType[] {
+  return ALERT_TYPES.filter((type) => superAdmin || type !== "WHATSAPP_SETTINGS_CHANGED");
+}
+
+/**
+ * `/support?tab=alerts&state=resolved&type=GOAL_SUM_GAP&page=2`; defaults: open,
+ * all types, page 1. A type the admin cannot see counts as all types, so the
+ * list matches the select (and server and browser compute the same keys).
+ */
+export function parseAlertsListParams(search: Readable, { superAdmin }: { superAdmin: boolean }): AlertsListParams {
   const state = search.get("state");
   const type = search.get("type");
   return {
     state: isAlertState(state) ? state : "open",
-    ...(isAlertType(type) && { type }),
+    ...(isAlertType(type) && visibleAlertTypes(superAdmin).includes(type) && { type }),
     page: parseStoresListParams(search).page,
   };
 }

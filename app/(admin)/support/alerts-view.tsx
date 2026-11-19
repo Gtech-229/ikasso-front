@@ -6,7 +6,6 @@ import {
   ALERT_STATE_LABELS,
   ALERT_STATES,
   ALERT_TYPE_LABELS,
-  ALERT_TYPES,
   alertCountQueryKey,
   fetchAlertCount,
   type AlertsListParams,
@@ -15,12 +14,14 @@ import {
 } from "@/lib/api/alerts";
 import { isSuperAdmin } from "@/lib/auth/permissions";
 import { useCurrentAdmin } from "@/lib/auth/use-current-admin";
-import { alertsListHref, parseAlertsListParams } from "@/lib/support-params";
+import { alertsListHref, parseAlertsListParams, visibleAlertTypes } from "@/lib/support-params";
 import { PillLink } from "../stores/pill-link";
 import { AlertsTable } from "./alerts-table";
 
 export function AlertsView() {
-  const params = parseAlertsListParams(useSearchParams());
+  const admin = useCurrentAdmin().data;
+  const superAdmin = !!admin && isSuperAdmin(admin);
+  const params = parseAlertsListParams(useSearchParams(), { superAdmin });
   return (
     // Named by its tab ("Alertes") in the support tab bar.
     <section aria-label="Alertes" className="flex min-w-0 flex-col gap-4">
@@ -34,7 +35,7 @@ export function AlertsView() {
             ))}
           </ul>
         </nav>
-        <TypeSelect params={params} />
+        <TypeSelect params={params} superAdmin={superAdmin} />
       </div>
       <AlertsTable params={params} />
     </section>
@@ -56,12 +57,8 @@ function StateFilter({ state, params }: { state: AlertState; params: AlertsListP
   );
 }
 
-function TypeSelect({ params }: { params: AlertsListParams }) {
-  const admin = useCurrentAdmin().data;
-  // The API lists WhatsApp settings changes to the super admin only.
-  const types = ALERT_TYPES.filter(
-    (type) => type !== "WHATSAPP_SETTINGS_CHANGED" || (admin && isSuperAdmin(admin)),
-  );
+function TypeSelect({ params, superAdmin }: { params: AlertsListParams; superAdmin: boolean }) {
+  const types = visibleAlertTypes(superAdmin);
   return (
     <div className="flex flex-col gap-1">
       <label htmlFor="alert-type" className="sr-only">
