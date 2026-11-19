@@ -103,7 +103,7 @@ const SEARCH_DELAY_MS = 300;
 const TOO_LONG = "La recherche doit contenir 1 à 100 caractères";
 
 /**
- * Search by store name or city, written to the URL after a short pause.
+ * The list search box, written to the URL after a short pause.
  * `hrefFor` gives the list URL for a search (page 1, other filters kept).
  */
 export function SearchBox({
@@ -111,11 +111,13 @@ export function SearchBox({
   hrefFor,
   label,
   id = "store-search",
+  placeholder = "Nom ou ville",
 }: {
   q: string | undefined;
   hrefFor: (q: string | undefined) => string;
   label: string;
   id?: string;
+  placeholder?: string;
 }) {
   const urlQ = q ?? "";
   const [value, setValue] = useState(urlQ);
@@ -150,7 +152,7 @@ export function SearchBox({
           ref={inputRef}
           id={id}
           type="search"
-          placeholder="Nom ou ville"
+          placeholder={placeholder}
           value={value}
           onChange={(event) => setValue(event.target.value)}
           aria-invalid={tooLong || undefined}
