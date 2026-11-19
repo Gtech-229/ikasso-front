@@ -5,7 +5,7 @@ import { useIsMutating, useMutation, useQuery, useQueryClient, type QueryClient 
 import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-import { StatusPill, type PillTone } from "@/components/status-pill";
+import { StatusPill, SUBSCRIPTION_STATE_TONES } from "@/components/status-pill";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Field, FieldDescription, FieldError, FieldLabel, FieldLegend, FieldSet } from "@/components/ui/field";
@@ -21,7 +21,6 @@ import {
   storeSubscriptionsQueryKey,
   SUBSCRIPTION_STATUS_LABELS,
   updateSubscription,
-  type SubscriptionStatus,
   type SubscriptionView,
 } from "@/lib/api/subscriptions";
 import { can } from "@/lib/auth/permissions";
@@ -37,12 +36,6 @@ import {
   type SubscriptionFormValues,
 } from "@/lib/subscription-form";
 import { SaveAlert, showSaveError } from "../stores/edit-support";
-
-const STATUS_TONES: Record<SubscriptionStatus, PillTone> = {
-  ACTIVE: "success",
-  UPCOMING: "pending",
-  EXPIRED: "dark",
-};
 
 const FORM_FIELDS = ["plan", "startsOn", "endsOn"] as const;
 const HISTORY_HEADING_ID = "subscriptions-history-title";
@@ -178,7 +171,8 @@ function History({
               <div className="flex flex-col gap-1">
                 <p className="flex items-center gap-2 text-[15px] font-semibold">
                   {PLAN_LABELS[subscription.plan]}
-                  <StatusPill tone={STATUS_TONES[subscription.status]}>
+                  {/* A subscription's status is one of the store states: same pill colours. */}
+                  <StatusPill tone={SUBSCRIPTION_STATE_TONES[subscription.status]}>
                     {SUBSCRIPTION_STATUS_LABELS[subscription.status]}
                   </StatusPill>
                 </p>
