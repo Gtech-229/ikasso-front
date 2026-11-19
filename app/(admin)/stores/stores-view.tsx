@@ -9,17 +9,14 @@ import { Input } from "@/components/ui/input";
 import { fetchStoreCount, STORE_STATUS_LABELS, type StoreStatus, type StoresListParams } from "@/lib/api/stores";
 import { storeCountQuery } from "@/lib/api/stores-queries";
 import { parseStoresListParams, SEARCH_MAX_LENGTH, storesListHref } from "@/lib/stores-list-params";
-import { cn } from "@/lib/utils";
-import { replaceStoresUrl, ShallowLink } from "./shallow-link";
+import { PillLink, shownCount } from "./pill-link";
+import { replaceStoresUrl } from "./shallow-link";
 import { StoresTable } from "./stores-table";
 
 function useStoreCount(status?: StoreStatus) {
   const { queryKey } = storeCountQuery(status);
   return useQuery({ queryKey, queryFn: () => fetchStoreCount(status) }).data;
 }
-
-// "—" until the API answers, never a guessed number.
-const shown = (count: number | undefined) => (count === undefined ? "—" : String(count));
 
 export function StoresView() {
   const params = parseStoresListParams(useSearchParams());
@@ -48,11 +45,11 @@ function Kpis() {
     <section aria-label="Chiffres clés" className="grid grid-cols-3 gap-2 sm:gap-3">
       <div className="relative overflow-hidden rounded-card bg-ink p-3 pb-5 text-surface sm:p-5 sm:pb-7">
         <p className="text-[13px] text-surface/70 sm:text-[14px]">À vérifier</p>
-        <p className="font-display text-[28px] leading-tight font-bold sm:text-[36px]">{shown(pending)}</p>
+        <p className="font-display text-[28px] leading-tight font-bold sm:text-[36px]">{shownCount(pending)}</p>
         <div className="stripe absolute inset-x-0 bottom-0 h-2" />
       </div>
-      <Kpi label="Vérifiées" value={shown(verified)} />
-      <Kpi label="Suspendues" value={shown(suspended)} />
+      <Kpi label="Vérifiées" value={shownCount(verified)} />
+      <Kpi label="Suspendues" value={shownCount(suspended)} />
     </section>
   );
 }
@@ -92,17 +89,13 @@ function Tab({ tab, params }: { tab: (typeof TABS)[number]; params: StoresListPa
   const count = useStoreCount(tab.status);
   const active = tab.status === params.status;
   return (
-    <ShallowLink
+    <PillLink
       href={storesListHref({ status: tab.status, q: params.q, page: 1 })}
-      aria-current={active ? "page" : undefined}
+      active={active}
+      label={tab.label}
+      count={count ?? null}
       title={tab.status ? STORE_STATUS_LABELS[tab.status] : "Toutes les quincailleries"}
-      className={cn(
-        "flex min-h-11 items-center rounded-full px-4 text-[15px] font-semibold whitespace-nowrap transition-colors",
-        active ? "bg-ink text-surface" : "bg-surface text-ink hover:bg-ink/5",
-      )}
-    >
-      {tab.label} · {shown(count)}
-    </ShallowLink>
+    />
   );
 }
 

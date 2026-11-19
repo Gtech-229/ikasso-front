@@ -16,7 +16,7 @@ import { formatDate } from "@/lib/format";
 import { parseStatsPeriod, STATS_PERIODS, statsHref, statsPeriodRange, todayUtc, type StatsPeriod } from "@/lib/stats-period";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
-import { ShallowLink } from "../stores/shallow-link";
+import { PillLink } from "../stores/pill-link";
 
 const numberFormat = new Intl.NumberFormat("fr-FR");
 const n = (value: number) => numberFormat.format(value);
@@ -70,16 +70,7 @@ function PeriodSwitch({ period }: { period: StatsPeriod }) {
           const active = option.days === period;
           return (
             <li key={option.days}>
-              <ShallowLink
-                href={statsHref(option.days)}
-                aria-current={active ? "page" : undefined}
-                className={cn(
-                  "flex min-h-11 items-center rounded-full px-4 text-[15px] font-semibold whitespace-nowrap transition-colors",
-                  active ? "bg-ink text-surface" : "bg-surface text-ink hover:bg-ink/5",
-                )}
-              >
-                {option.label}
-              </ShallowLink>
+              <PillLink href={statsHref(option.days)} active={active} label={option.label} />
             </li>
           );
         })}
