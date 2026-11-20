@@ -20,10 +20,6 @@ refuse() {
 cd "$dir"
 # Physical paths (symlinks resolved), so the shell and Compose agree on them.
 here=$(pwd -P)
-# The admin service builds `context: ../frontend` from the backend checkout:
-# the checkout updated here must be that folder, or a stale copy is deployed.
-[ "$(basename "$here")" = frontend ] ||
-  refuse "$here is not the frontend folder that the admin service builds (../frontend next to backend)."
 backend=$(cd "$here/../backend" 2>/dev/null && pwd -P) ||
   refuse "no backend checkout next to $here."
 [ -f "$backend/docker-compose.prod.yml" ] ||
@@ -32,6 +28,12 @@ backend=$(cd "$here/../backend" 2>/dev/null && pwd -P) ||
 case "$backend" in
   *[!A-Za-z0-9._/-]*) refuse "the backend path $backend holds characters other than letters, digits, . _ / -." ;;
 esac
+# The admin service builds `context: ../frontend` from the backend checkout:
+# the checkout updated here must be that very folder, or another copy is
+# deployed (a wrongly named checkout, or a backend symlinked elsewhere).
+built=$(cd "$backend/../frontend" 2>/dev/null && pwd -P) || built="(none)"
+[ "$built" = "$here" ] ||
+  refuse "the admin service builds $built, not this checkout $here."
 compose="docker compose --project-directory $backend -f $backend/docker-compose.prod.yml"
 
 # The checkout is the operator's too: never overwrite a hand edit.
