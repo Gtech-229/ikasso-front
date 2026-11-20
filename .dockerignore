@@ -1,0 +1,13 @@
+# Kept out of the image build context: dependencies and builds are made inside
+# the image; workflow files, local env files and git history never ship.
+node_modules
+.next
+blueprint
+.claude
+.agents
+.git
+.env*
+*.tsbuildinfo
+Dockerfile
+.dockerignore
+npm-debug.log*

@@ -4,6 +4,9 @@ import { readEnv } from "./lib/env";
 const { API_URL } = readEnv();
 
 const nextConfig: NextConfig = {
+  // A self-contained server (`.next/standalone/server.js`) for the production
+  // Docker image (feature 18).
+  output: "standalone",
   cacheComponents: true,
   partialPrefetching: true,
   turbopack: {
