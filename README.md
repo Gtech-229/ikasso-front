@@ -170,3 +170,93 @@ backend's own backup-first deploy.
 `../frontend` holds and waits for its health check. Keep the frontend checkout
 present on the VPS and on the commit you mean to run (`git pull` it before a
 backend deploy); a missing or broken checkout makes the backend deploy fail.
+
+### Deploys from GitHub
+
+After the first deploy above, updates start from GitHub instead of an SSH
+session (feature 19):
+
+- **CI** (`.github/workflows/ci.yml`) runs on every push to `main` and every
+  pull request: `npm ci`, lint, the production build and the production image
+  (`docker build`, never pushed).
+- **Deploy** (`.github/workflows/deploy.yml`): **Actions > Deploy > Run
+  workflow** on `main`. It deploys that commit only once its CI run passed.
+  Over SSH, `.github/scripts/deploy-remote.sh` checks the VPS, fast-forwards the
+  frontend checkout to the commit, then runs
+  `docker compose -f docker-compose.prod.yml up -d --build --no-deps --wait admin`
+  from the backend checkout next to it: only the admin is rebuilt and
+  restarted, never the API or the database. No backup is taken: the admin holds
+  no data.
+
+The deploy is refused, and nothing changes, when:
+
+- it was started from another branch, or CI has not passed for the commit;
+- the VPS frontend checkout is not on `main`, or has local changes;
+- there is no `backend/docker-compose.prod.yml` next to the frontend checkout,
+  or it has no `admin` service yet (README "The backend side" above);
+- the commit is not on `origin/main`, or the checkout cannot fast-forward to it
+  (a commit made on the VPS, or an older commit than the one deployed).
+
+If the admin is not healthy within 5 minutes, the job turns red and the new
+container stays: read `docker compose -f docker-compose.prod.yml logs admin`
+in the backend checkout, then deploy a fix. The manual commands of "Updates"
+above keep working as a fallback.
+
+A backend deploy and a frontend deploy started at the same moment are not
+locked against each other: start one, wait for it, then the other.
+
+One-time setup (SSH on port 22; replace `<...>`):
+
+1. **The deploy user** is the backend's (it owns both checkouts and runs Docker
+   without `sudo`). The frontend checkout's absolute path uses only letters,
+   digits, `.`, `_`, `/` and `-`.
+2. **The VPS reads this private repo with its own read-only deploy key.**
+   GitHub accepts a deploy key on one repository only, so the backend's key
+   cannot be reused. On the VPS:
+
+   ```bash
+   ssh-keygen -t ed25519 -f ~/.ssh/ikasso_admin_github -N ''
+   ```
+
+   Add `~/.ssh/ikasso_admin_github.pub` under this repo's **Settings > Deploy
+   keys**, without write access. Then add a host alias to `~/.ssh/config`, so
+   git picks this key for this repo only:
+
+   ```
+   Host github-ikasso-admin
+     HostName github.com
+     IdentityFile ~/.ssh/ikasso_admin_github
+     IdentitiesOnly yes
+   ```
+
+   Clone with `git clone git@github-ikasso-admin:<owner>/<repo>.git frontend`
+   next to `backend/` (or set an existing checkout's remote to that URL). The
+   folder must be named `frontend`: the `admin` service builds
+   `../frontend`, and the deploy refuses any other folder.
+   **ISPConfig shell users:** as in the backend README, write the config with
+   absolute paths, clone with
+   `GIT_SSH_COMMAND="ssh -F <your-home>/.ssh/config" git clone git@github-ikasso-admin:<owner>/<repo>.git frontend`
+   (the checkout's own setting does not exist yet at that point), then set
+   `git config core.sshCommand "ssh -F <your-home>/.ssh/config"` in the
+   checkout so every later `git fetch` (the deploys too) uses it.
+3. **A key for Actions**, made on your own machine, for this repo only:
+   `ssh-keygen -t ed25519 -f ikasso_admin_deploy -N '' -C github-actions-admin-deploy`.
+   Append `ikasso_admin_deploy.pub` to the deploy user's
+   `~/.ssh/authorized_keys` on the VPS; the private file becomes the
+   `DEPLOY_SSH_KEY` secret (step 4); then delete your local copy. A separate
+   key per repository can be revoked on its own (the backend README also has
+   you delete its key, and GitHub secrets cannot be read back). **The pinned
+   host key** is the backend's: the same `ssh-keyscan -t ed25519 <vps-host>`
+   line, checked as the backend README describes.
+4. **In GitHub**, this repo's **Settings > Environments > New environment**
+   `production`:
+   - **Required: Deployment branches and tags > Selected branches and tags,
+     with `main` only.** A run uses the workflow file of the branch it starts
+     from, so this rule (which GitHub enforces) is what keeps the SSH key away
+     from any other branch.
+   - Optional: yourself as required reviewer, so each run waits for your
+     approval.
+   - Five secrets: `DEPLOY_HOST` (the VPS's address), `DEPLOY_USER`,
+     `DEPLOY_PATH` (the **frontend** checkout, e.g. `/path/to/frontend`),
+     `DEPLOY_SSH_KEY` (the whole private key file) and `DEPLOY_KNOWN_HOSTS`
+     (the host key line).
