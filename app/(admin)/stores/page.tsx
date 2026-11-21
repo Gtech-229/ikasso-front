@@ -7,6 +7,7 @@ import { STORE_COUNT_FILTERS, storeCountQuery } from "@/lib/api/stores-queries";
 import { RequirePermission } from "@/lib/auth/require-permission";
 import { getQueryClient } from "@/lib/query/get-query-client";
 import { parseStoresListParams } from "@/lib/stores-list-params";
+import { ImportStoresButton } from "./import-stores-button";
 import { RegisterStoreButton } from "./register-store-button";
 import { StoresSkeleton, StoresView } from "./stores-view";
 
@@ -19,7 +20,10 @@ export default function StoresPage({ searchParams }: PageProps<"/stores">) {
     <div className="flex min-w-0 flex-col gap-5 p-5 md:p-8">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="font-display text-[32px] leading-tight font-bold">Quincailleries</h1>
-        <RegisterStoreButton />
+        <div className="flex flex-wrap gap-3">
+          <ImportStoresButton />
+          <RegisterStoreButton />
+        </div>
       </div>
       <Suspense fallback={<StoresSkeleton />}>
         <RequirePermission permission="stores.read">

@@ -21,8 +21,14 @@ export function buildInit(
     Accept: options.as === "blob" ? "*/*" : "application/json",
     ...extraHeaders,
   };
-  let body: string | undefined;
-  if (options.body !== undefined) {
+  let body: string | FormData | undefined;
+  if (options.body instanceof FormData) {
+    // A file upload (store import): the browser sets the multipart Content-Type
+    // with its boundary. A FormData can be sent again, so the 401 replay works.
+    // The /api/v1 rewrite is outside proxy.ts's matcher, so no proxy body
+    // buffering limit applies (proxyClientMaxBodySize, 10 MB by default).
+    body = options.body;
+  } else if (options.body !== undefined) {
     headers["Content-Type"] = "application/json";
     body = JSON.stringify(options.body);
   }
