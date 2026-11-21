@@ -31,6 +31,8 @@ export const storeSummarySchema = z.object({
   createdAt: z.string(),
   subscriptionState: subscriptionStateSchema,
   currentSubscription: subscriptionSchema.nullable(),
+  /** File ready for verification: always true when an admin registered the store. */
+  documentsComplete: z.boolean(),
 });
 export type StoreSummary = z.infer<typeof storeSummarySchema>;
 
@@ -218,6 +220,34 @@ export function reactivateStore(id: string): Promise<StoreDetail> {
 /** PENDING / VERIFIED / SUSPENDED -> CLOSED, final, with a reason. */
 export function closeStore(id: string, reason: string): Promise<StoreDetail> {
   return apiFetch(`${storeDetailPath(id)}/close`, { method: "PATCH", body: { reason }, schema: storeDetailSchema });
+}
+
+export type BulkStoreAction = "verify" | "suspend" | "reactivate" | "close";
+
+/** One result per store, in the order sent; `error` is the single action's. */
+export const bulkStatusResultSchema = z.object({
+  results: z.array(
+    z.object({
+      id: z.string(),
+      ok: z.boolean(),
+      error: z.object({ code: z.string(), message: z.string() }).optional(),
+    }),
+  ),
+});
+export type BulkStatusResult = z.infer<typeof bulkStatusResultSchema>;
+
+/**
+ * Applies one status action to several stores (1 to 100, guard
+ * `stores.manage`). Each store gets the single action's rules; a refusal does
+ * not stop the others. The reason is sent for suspend and close only.
+ */
+export function bulkStoreAction(action: BulkStoreAction, ids: string[], reason?: string): Promise<BulkStatusResult> {
+  const needsReason = action === "suspend" || action === "close";
+  return apiFetch(`/admin/stores/bulk/${action}`, {
+    method: "POST",
+    body: needsReason ? { ids, reason } : { ids },
+    schema: bulkStatusResultSchema,
+  });
 }
 
 export type StoreInfoChanges = Partial<Pick<StoreDetail, "name" | "address" | "city" | "phone" | "tradeRegister">>;

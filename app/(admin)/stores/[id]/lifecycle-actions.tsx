@@ -25,7 +25,13 @@ import {
 import { invalidateStoreLists } from "@/lib/api/stores-queries";
 import { can } from "@/lib/auth/permissions";
 import { useCurrentAdmin } from "@/lib/auth/use-current-admin";
-import { REASON_MAX, reasonSchema, STORE_ACTIONS, type StoreAction } from "@/lib/store-lifecycle";
+import {
+  REASON_MAX,
+  reasonSchema,
+  STORE_ACTION_CONSEQUENCES,
+  STORE_ACTIONS,
+  type StoreAction,
+} from "@/lib/store-lifecycle";
 
 const HEADING_ID = "actions-title";
 
@@ -46,7 +52,7 @@ const ACTIONS: Record<
     button: "Suspendre",
     variant: "secondary",
     title: (name) => `Suspendre ${name} ?`,
-    text: "Elle ne pourra plus enregistrer de dépôts ; ses clients pourront toujours être servis.",
+    text: STORE_ACTION_CONSEQUENCES.suspend,
     confirm: "Suspendre",
     pending: "Suspension…",
     done: "Quincaillerie suspendue.",
@@ -56,7 +62,7 @@ const ACTIONS: Record<
     button: "Réactiver",
     variant: "action",
     title: (name) => `Réactiver ${name} ?`,
-    text: "Le motif de suspension sera effacé.",
+    text: STORE_ACTION_CONSEQUENCES.reactivate,
     confirm: "Réactiver",
     pending: "Réactivation…",
     done: "Quincaillerie réactivée.",
@@ -66,7 +72,7 @@ const ACTIONS: Record<
     button: "Fermer",
     variant: "destructive",
     title: (name) => `Fermer ${name} ?`,
-    text: "Définitif : la quincaillerie ne pourra plus être modifiée ni rouverte. Son historique est conservé.",
+    text: STORE_ACTION_CONSEQUENCES.close,
     confirm: "Fermer définitivement",
     pending: "Fermeture…",
     done: "Quincaillerie fermée.",
