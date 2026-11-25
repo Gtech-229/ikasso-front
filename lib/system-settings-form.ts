@@ -27,8 +27,8 @@ export const SETTING_SECTIONS: SettingSection[] = [
     fields: [
       {
         key: "maxLoginAttempts",
-        label: "Tentatives de connexion avant blocage",
-        hint: "Échecs consécutifs avant que le compte soit bloqué 15 minutes.",
+        label: "Tentatives de connexion avant blocage (15 min)",
+        hint: "Échecs consécutifs avant que le compte soit bloqué.",
         range: { min: 3, max: 20 },
         message: "Le nombre de tentatives doit être un entier entre 3 et 20",
       },
@@ -46,23 +46,23 @@ export const SETTING_SECTIONS: SettingSection[] = [
     fields: [
       {
         key: "maxPinAttempts",
-        label: "Codes PIN erronés avant blocage",
-        hint: "Avant que l’utilisateur soit bloqué 15 minutes ; 0 = sans limite.",
+        label: "Codes PIN erronés avant blocage (15 min)",
+        hint: "Avant que l’utilisateur soit bloqué ; 0 = sans limite.",
         range: { min: 3, max: 10 },
         zeroAllowed: true,
         message: "Le nombre de tentatives de PIN doit être 0 (sans limite) ou un entier entre 3 et 10",
       },
       {
         key: "maxCodesPerHour",
-        label: "Codes de connexion envoyés par heure",
-        hint: "Pour toute la plateforme, en plus des limites par numéro ; au-delà, aucun code n’est envoyé et une alerte est créée.",
+        label: "Codes de connexion envoyés par heure (toute la plateforme)",
+        hint: "En plus des limites par numéro ; au-delà, aucun code n’est envoyé et une alerte est créée.",
         range: { min: 1, max: 10_000 },
         message: "Le nombre de codes de connexion par heure doit être un entier entre 1 et 10000",
       },
       {
         key: "maxCodesPerDay",
-        label: "Codes de connexion envoyés par 24 heures",
-        hint: "Pour toute la plateforme, en plus des limites par numéro ; au-delà, aucun code n’est envoyé et une alerte est créée.",
+        label: "Codes de connexion envoyés par 24 h (toute la plateforme)",
+        hint: "En plus des limites par numéro ; au-delà, aucun code n’est envoyé et une alerte est créée.",
         range: { min: 1, max: 100_000 },
         message: "Le nombre de codes de connexion par jour doit être un entier entre 1 et 100000",
       },

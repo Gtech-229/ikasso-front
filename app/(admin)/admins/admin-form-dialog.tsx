@@ -22,7 +22,7 @@ import {
 import { adminsQueryKey, createAdmin, updateAdmin, type AdminSummary } from "@/lib/api/admins";
 import { isApiError } from "@/lib/api/errors";
 import { requestPasswordLink } from "@/lib/api/password";
-import type { Role } from "@/lib/api/roles";
+import { rolesQueryKey, type Role } from "@/lib/api/roles";
 import { registerRechecking, useFieldError } from "@/lib/form-fields";
 import { SaveAlert, showSaveError } from "../stores/edit-support";
 import { focusAdminsList, roleOptions } from "./admins-view";
@@ -74,6 +74,12 @@ function CreateDialog({ roles, onClose }: { roles: Role[]; onClose: () => void }
       if (isApiError(error) && error.error === "EMAIL_ALREADY_USED") {
         form.setError("email", { message: error.message }, { shouldFocus: true });
         return;
+      }
+      // F-06: the role was deleted meanwhile (404): reload the roles so the
+      // select drops it, and the admins list, as the edit dialog does.
+      if (isApiError(error) && error.statusCode === 404) {
+        void queryClient.invalidateQueries({ queryKey: rolesQueryKey });
+        void queryClient.invalidateQueries({ queryKey: adminsQueryKey });
       }
       setAlert(showSaveError(error, form, [...DETAIL_FIELDS, "roleId"]));
     },
