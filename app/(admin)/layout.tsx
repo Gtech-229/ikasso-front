@@ -1,5 +1,6 @@
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import { Suspense } from "react";
+import { LoadingScreen } from "@/components/loading-screen";
 import { currentAdminQueryKey } from "@/lib/api/admin-auth";
 import { serverFetch } from "@/lib/api/server";
 import { countSchema, pendingStoresCountQueryKey, storeCountPath } from "@/lib/api/stores";
@@ -38,10 +39,8 @@ async function SessionGate({ children }: { children: React.ReactNode }) {
 
 function AdminLoading() {
   return (
-    <main className="flex flex-1 items-center justify-center p-5">
-      <p role="status" className="text-[15px] text-muted-ink">
-        Chargement…
-      </p>
+    <main className="flex flex-1">
+      <LoadingScreen message="Préparation de votre espace d’administration" />
     </main>
   );
 }

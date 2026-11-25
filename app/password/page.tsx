@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { AuthLayout } from "@/components/auth-layout";
+import { LoadingScreen } from "@/components/loading-screen";
 import { PasswordFlow } from "./password-flow";
 
 export const metadata: Metadata = {
@@ -13,13 +14,7 @@ export const metadata: Metadata = {
 export default function PasswordPage() {
   return (
     <AuthLayout>
-      <Suspense
-        fallback={
-          <p role="status" className="py-10 text-center text-[15px] text-muted-ink">
-            Chargement…
-          </p>
-        }
-      >
+      <Suspense fallback={<LoadingScreen variant="inline" />}>
         <PasswordFlow />
       </Suspense>
     </AuthLayout>
