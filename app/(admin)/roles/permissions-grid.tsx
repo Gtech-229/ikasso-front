@@ -2,7 +2,7 @@
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { CheckCheck } from "lucide-react";
-import { Fragment, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -81,7 +81,8 @@ export function PermissionsGrid({ roles, permissions }: { roles: Role[]; permiss
   return (
     <div className="flex min-w-0 flex-col gap-4">
       <div aria-busy={saving || undefined} className="min-w-0 overflow-x-auto rounded-card bg-surface p-2 md:p-4">
-        <table className="w-full min-w-[40rem] border-collapse text-[15px]">
+        {/* No border under the grid's very last row (rows are grouped in one tbody per module). */}
+        <table className="w-full min-w-[40rem] border-collapse text-[15px] [&>tbody:last-child>tr:last-child]:border-0">
           <thead>
             <tr className="border-b border-border">
               <th scope="col" className="sticky left-0 z-10 bg-surface px-3 py-2 text-left text-[13px] font-semibold text-muted-ink uppercase">
@@ -105,9 +106,10 @@ export function PermissionsGrid({ roles, permissions }: { roles: Role[]; permiss
               })}
             </tr>
           </thead>
-          <tbody>
-            {modules.map((module) => (
-              <Fragment key={module.label}>
+          {/* One tbody per module (F-08): each scope="rowgroup" header then covers
+              only its own module's rows. */}
+          {modules.map((module) => (
+              <tbody key={module.label}>
                 <tr className="border-b border-border bg-muted/40">
                   <th scope="rowgroup" className="sticky left-0 z-10 bg-muted px-3 pt-4 pb-2 text-left font-display text-[15px] font-bold">
                     {module.label}
@@ -121,7 +123,7 @@ export function PermissionsGrid({ roles, permissions }: { roles: Role[]; permiss
                 {module.permissions.map((permission) => {
                   const full = isRowFull(roles, draft, permission.name);
                   return (
-                    <tr key={permission.name} className="border-b border-border last:border-0">
+                    <tr key={permission.name} className="border-b border-border">
                       <th scope="row" className="sticky left-0 z-10 bg-surface px-3 py-2 text-left font-normal">
                         <div className="flex items-start gap-2">
                           <ToggleButton
@@ -158,9 +160,8 @@ export function PermissionsGrid({ roles, permissions }: { roles: Role[]; permiss
                     </tr>
                   );
                 })}
-              </Fragment>
-            ))}
-          </tbody>
+              </tbody>
+          ))}
         </table>
       </div>
 
