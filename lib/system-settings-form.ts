@@ -97,8 +97,6 @@ export const SETTING_SECTIONS: SettingSection[] = [
   },
 ];
 
-export const SETTING_FIELDS: SettingField[] = SETTING_SECTIONS.flatMap((section) => section.fields);
-
 /** The allowed values in words, for the hint. */
 export function rangeText(field: SettingField): string {
   return field.zeroAllowed ? `0 ou ${formatRange(field.range)}` : formatRange(field.range);
@@ -115,25 +113,31 @@ function fieldSchema(field: SettingField) {
     }, field.message);
 }
 
-/** Text values (inputs); `settingsChanges` turns them into numbers. */
-export const settingsFormSchema = z.object(
-  Object.fromEntries(SETTING_FIELDS.map((field) => [field.key, fieldSchema(field)])) as Record<
-    SystemSettingKey,
-    ReturnType<typeof fieldSchema>
-  >,
-);
-export type SettingsFormValues = Record<SystemSettingKey, string>;
+/** One tab's text values (inputs), keyed by setting; `sectionChanges` turns them into numbers. */
+export type SectionFormValues = Partial<Record<SystemSettingKey, string>>;
 
-export function settingsFormValues(settings: SystemSettings): SettingsFormValues {
-  return Object.fromEntries(SETTING_FIELDS.map((field) => [field.key, String(settings[field.key])])) as SettingsFormValues;
+/** The rules of one tab's fields only: each tab is its own form. */
+export function sectionFormSchema(section: SettingSection) {
+  return z.object(Object.fromEntries(section.fields.map((field) => [field.key, fieldSchema(field)])));
 }
 
-/** Only the values that differ from the saved ones, as integers (never null, never unchanged). */
-export function settingsChanges(initial: SystemSettings, values: SettingsFormValues): Partial<SystemSettings> {
+export function sectionFormValues(section: SettingSection, settings: SystemSettings): SectionFormValues {
+  return Object.fromEntries(section.fields.map((field) => [field.key, String(settings[field.key])]));
+}
+
+/**
+ * The tab's values that differ from the saved ones, as integers (never null,
+ * never unchanged, never another tab's).
+ */
+export function sectionChanges(
+  section: SettingSection,
+  saved: SystemSettings,
+  values: SectionFormValues,
+): Partial<SystemSettings> {
   const changes: Partial<SystemSettings> = {};
-  for (const { key } of SETTING_FIELDS) {
-    const next = Number(values[key].trim());
-    if (next !== initial[key]) changes[key] = next;
+  for (const { key } of section.fields) {
+    const next = Number((values[key] ?? "").trim());
+    if (next !== saved[key]) changes[key] = next;
   }
   return changes;
 }
